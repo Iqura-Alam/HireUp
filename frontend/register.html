@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HireUp - Register</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>Create an Account</h2>
+        <div id="error-message" class="error-message"></div>
+        <form onsubmit="register(event)">
+            <div class="form-group">
+                <label for="role">I am a...</label>
+                <select id="role" onchange="toggleFields()">
+                    <option value="Candidate">Candidate (Job Seeker)</option>
+                    <option value="Employer">Employer (Company)</option>
+                </select>
+            </div>
+
+            <!-- Common Fields -->
+            <div class="form-group">
+                <label for="full_name">Full Name (User / Recruiter)</label>
+                <input type="text" id="full_name" required>
+            </div>
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" required>
+            </div>
+
+            <div class="form-group">
+                <label for="location">Location</label>
+                <input type="text" id="location" placeholder="City, Country">
+            </div>
+
+            <!-- Candidate Specific Fields -->
+            <div id="candidate-fields">
+                <div class="form-group">
+                    <label for="experience">Experience (Years)</label>
+                    <input type="number" id="experience" min="0" value="0">
+                </div>
+            </div>
+
+            <!-- Employer Specific Fields -->
+            <div id="employer-fields" class="hidden">
+                <div class="form-group">
+                    <label for="company_name">Company Name</label>
+                    <input type="text" id="company_name">
+                </div>
+                <div class="form-group">
+                    <label for="industry">Industry</label>
+                    <input type="text" id="industry" placeholder="e.g. Technology, Healthcare">
+                </div>
+                <div class="form-group">
+                    <label for="contact_number">Contact Number</label>
+                    <input type="text" id="contact_number">
+                </div>
+                <div class="form-group">
+                    <label for="website">Website</label>
+                    <input type="url" id="website" placeholder="https://example.com">
+                </div>
+            </div>
+
+            <button type="submit">Sign Up</button>
+        </form>
+        <div class="link">
+            Already have an account? <a href="login.html">Login</a>
+        </div>
+    </div>
+    <script src="js/auth.js"></script>
+    <script>
+        function toggleFields() {
+            const role = document.getElementById('role').value;
+            const candidateFields = document.getElementById('candidate-fields');
+            const employerFields = document.getElementById('employer-fields');
+
+            if (role === 'Candidate') {
+                candidateFields.classList.remove('hidden');
+                employerFields.classList.add('hidden');
+            } else {
+                candidateFields.classList.add('hidden');
+                employerFields.classList.remove('hidden');
+            }
+        }
+        // Run once on load
+        toggleFields();
+    </script>
+</body>
+
+</html>

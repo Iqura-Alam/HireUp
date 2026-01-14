@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HireUp - Home</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/splash.css">
+    <style>
+        .container {
+            max-width: 800px;
+            text-align: center;
+        }
+
+        .nav {
+            margin-bottom: 2rem;
+        }
+
+        .nav a {
+            margin: 0 1rem;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="splash-screen">
+        <div class="splash-content">
+            <h1 class="logo-text">HireUp</h1>
+            <p>Connecting Talent with Opportunity</p>
+            <div class="loader"></div>
+        </div>
+    </div>
+    <div class="container fade-in">
+        <h1>Welcome to HireUp</h1>
+        <p>Connecting Talent with Opportunity</p>
+
+        <div id="auth-links" class="nav">
+            <a href="login.html">Login</a>
+            <a href="register.html">Register</a>
+        </div>
+
+        <div id="user-info" style="display: none;">
+            <h3>Hello, <span id="username-display">User</span>!</h3>
+            <p>You are logged in as <span id="role-display">Guest</span>.</p>
+            <button onclick="logout()" style="width: auto; margin-top: 1rem;">Logout</button>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        // Check if user is logged in
+        const token = localStorage.getItem('token');
+        const userStr = localStorage.getItem('user');
+
+        if (token && userStr) {
+            const user = JSON.parse(userStr);
+            document.getElementById('auth-links').style.display = 'none';
+            document.getElementById('user-info').style.display = 'block';
+            document.getElementById('username-display').textContent = user.username;
+            document.getElementById('role-display').textContent = user.role;
+        }
+
+        // Splash Screen Logic
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const splash = document.getElementById('splash-screen');
+                const mainContent = document.querySelector('.container');
+
+                splash.classList.add('fade-out');
+                mainContent.classList.add('visible');
+
+                // Remove from DOM after transition
+                setTimeout(() => {
+                    splash.style.display = 'none';
+                }, 1000);
+            }, 2000); // 2 seconds display time
+        });
+    </script>
+</body>
+
+</html>
