@@ -119,4 +119,53 @@ CREATE TRIGGER trg_application_validate_job
 BEFORE INSERT ON application
 FOR EACH ROW EXECUTE FUNCTION fn_validate_job_open_and_not_expired();
 
+-- users
+DROP TRIGGER IF EXISTS trg_users_set_updated_at ON users;
+CREATE TRIGGER trg_users_set_updated_at
+BEFORE UPDATE ON users
+FOR EACH ROW EXECUTE FUNCTION fn_set_updated_at();
+
+-- candidate_profile
+DROP TRIGGER IF EXISTS trg_candidate_profile_set_updated_at ON candidate_profile;
+CREATE TRIGGER trg_candidate_profile_set_updated_at
+BEFORE UPDATE ON candidate_profile
+FOR EACH ROW EXECUTE FUNCTION fn_set_updated_at();
+
+-- skill (usually static but good to have)
+DROP TRIGGER IF EXISTS trg_skill_set_updated_at ON skill;
+CREATE TRIGGER trg_skill_set_updated_at
+BEFORE UPDATE ON skill
+FOR EACH ROW EXECUTE FUNCTION fn_set_updated_at();
+
+-- candidate_skill
+DROP TRIGGER IF EXISTS trg_candidate_skill_set_updated_at ON candidate_skill;
+CREATE TRIGGER trg_candidate_skill_set_updated_at
+BEFORE UPDATE ON candidate_skill
+FOR EACH ROW EXECUTE FUNCTION fn_set_updated_at();
+
+-- AUDIT LOG TRIGGER
+CREATE OR REPLACE FUNCTION fn_audit_application_insert()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO audit_log(table_name, operation, record_id, new_data, changed_by)
+  VALUES (
+    'application',
+    'INSERT',
+    NEW.application_id,
+    jsonb_build_object(
+      'job_id', NEW.job_id,
+      'candidate_id', NEW.candidate_id,
+      'status', NEW.status
+    ),
+    NULL -- Could be NEW.candidate_id if we assume candidate triggered it
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_application_audit ON application;
+CREATE TRIGGER trg_application_audit
+AFTER INSERT ON application
+FOR EACH ROW EXECUTE FUNCTION fn_audit_application_insert();
+
 COMMIT;

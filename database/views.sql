@@ -20,8 +20,8 @@ SELECT
   COALESCE(
     jsonb_agg(
       jsonb_build_object(
-        'skill_name', r.skill_name,
-        'skill_level', r.skill_level,
+        'skill_name', s.skill_name,
+        'minimum_proficiency', r.minimum_proficiency,
         'is_mandatory', r.is_mandatory
       )
     ) FILTER (WHERE r.requirement_id IS NOT NULL),
@@ -31,6 +31,7 @@ SELECT
 FROM job j
 JOIN employer e ON e.employer_id = j.employer_id
 LEFT JOIN job_requirement r ON r.job_id = j.job_id
+LEFT JOIN skill s ON s.skill_id = r.skill_id
 WHERE j.status = 'Open'
   AND j.expires_at >= CURRENT_DATE
 GROUP BY
@@ -56,5 +57,68 @@ FROM employer e
 LEFT JOIN job j ON j.employer_id = e.employer_id
 LEFT JOIN application a ON a.job_id = j.job_id
 GROUP BY e.employer_id, e.company_name;
+
+-- Candidate Full Profile View
+CREATE OR REPLACE VIEW vw_candidate_full_profile AS
+SELECT
+  u.user_id,
+  u.email,
+  u.role,
+  c.full_name,
+  c.dob,
+  c.location,
+  c.experience_years,
+  c.contact_number,
+  
+  -- Aggregated Skills
+  COALESCE(
+    jsonb_agg(
+      jsonb_build_object(
+        'skill_name', s.skill_name,
+        'category', s.category,
+        'proficiency', cs.proficiency_level
+      )
+    ) FILTER (WHERE s.skill_id IS NOT NULL),
+    '[]'::jsonb
+  ) AS skills
+
+FROM users u
+JOIN candidate_profile c ON c.candidate_id = u.user_id
+LEFT JOIN candidate_skill cs ON cs.candidate_id = c.candidate_id
+LEFT JOIN skill s ON s.skill_id = cs.skill_id
+GROUP BY u.user_id, c.candidate_id;
+
+-- Candidate Applications View
+CREATE OR REPLACE VIEW vw_candidate_applications AS
+SELECT
+  a.application_id,
+  a.status AS application_status,
+  a.applied_at,
+  
+  j.job_id,
+  j.title AS job_title,
+  j.location AS job_location,
+  j.salary_range,
+  j.status AS job_status,
+  
+  e.employer_id,
+  e.company_name
+
+FROM application a
+JOIN job j ON j.job_id = a.job_id
+JOIN employer e ON e.employer_id = j.employer_id;
+
+-- Top Skills View (Analytics)
+CREATE OR REPLACE VIEW vw_top_skills AS
+SELECT
+  s.skill_name,
+  s.category,
+  COUNT(jr.requirement_id) AS demand_count
+FROM skill s
+JOIN job_requirement jr ON jr.skill_id = s.skill_id
+JOIN job j ON j.job_id = jr.job_id
+WHERE j.status = 'Open' AND j.expires_at >= CURRENT_DATE
+GROUP BY s.skill_id, s.skill_name
+ORDER BY demand_count DESC;
 
 COMMIT;
