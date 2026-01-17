@@ -121,4 +121,45 @@ WHERE j.status = 'Open' AND j.expires_at >= CURRENT_DATE
 GROUP BY s.skill_id, s.skill_name
 ORDER BY demand_count DESC;
 
+
+-- views for trainer and admin
+
+-- vw_course_enrollments to show course + enrolled candidates
+CREATE OR REPLACE VIEW vw_course_enrollments AS
+SELECT 
+    c.course_id,
+    c.title,
+    c.trainer_id,
+    cp.full_name AS candidate_name,
+    cp.candidate_id,
+    e.enrolled_at,
+    e.completion_status
+FROM course c
+JOIN enrollment e ON c.course_id = e.course_id
+JOIN candidate_profile cp ON cp.candidate_id = e.candidate_id;
+
+-- vw_popular_courses to order courses by enrollments
+CREATE OR REPLACE VIEW vw_popular_courses AS
+SELECT 
+    c.title,
+    t.organization_name,
+    COUNT(e.enrollment_id) AS enrollment_count
+FROM course c
+JOIN trainer_profile t ON c.trainer_id = t.trainer_id
+LEFT JOIN enrollment e ON c.course_id = e.course_id
+GROUP BY c.course_id, t.organization_name
+ORDER BY enrollment_count DESC;
+
+-- vw_trainer_dashboard 
+CREATE OR REPLACE VIEW vw_trainer_dashboard AS
+SELECT
+    c.trainer_id,
+    COUNT(DISTINCT c.course_id) AS total_courses,
+    COUNT(e.enrollment_id) AS total_students,
+    COUNT(CASE WHEN e.completion_status = 'Completed' THEN 1 END) AS completed_students
+FROM course c
+LEFT JOIN enrollment e ON c.course_id = e.course_id
+GROUP BY c.trainer_id;
+
 COMMIT;
+
