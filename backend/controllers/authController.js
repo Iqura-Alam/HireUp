@@ -34,6 +34,13 @@ exports.register = async (req, res) => {
                 `CALL sp_register_employer($1, $2, $3, $4, $5, $6, $7, $8)`,
                 [username, email, passwordHash, company_name, industry, location, contact_number, website]
             );
+
+        } else if (user_role === 'Trainer') {
+            const { organization_name, specialization, contact_number } = req.body;
+            await pool.query(
+                `CALL sp_register_trainer($1, $2, $3, $4, $5, $6)`,
+                [username, email, passwordHash, organization_name, specialization, contact_number]
+            );
         } else {
             // Fallback or Error for now
             return res.status(400).json({ message: 'Invalid Role' });

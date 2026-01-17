@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -23,12 +24,13 @@
                 <select id="role" onchange="toggleFields()">
                     <option value="Candidate">Candidate (Job Seeker)</option>
                     <option value="Employer">Employer (Company)</option>
+                    <option value="Trainer">Trainer (Instructor)</option>
                 </select>
             </div>
 
             <!-- Common Fields -->
             <div class="form-group">
-                <label for="full_name">Full Name (User / Recruiter)</label>
+                <label for="full_name">Full Name (User / Recruiter / Trainer)</label>
                 <input type="text" id="full_name" required>
             </div>
             <div class="form-group">
@@ -77,6 +79,22 @@
                 </div>
             </div>
 
+            <!-- Trainer Specific Fields -->
+            <div id="trainer-fields" class="hidden">
+                <div class="form-group">
+                    <label for="organization_name">Organization / Institute Name</label>
+                    <input type="text" id="organization_name">
+                </div>
+                <div class="form-group">
+                    <label for="specialization">Specialization</label>
+                    <input type="text" id="specialization" placeholder="e.g. Web Development, Data Science">
+                </div>
+                <div class="form-group">
+                    <label for="trainer_contact">Contact Number</label>
+                    <input type="text" id="trainer_contact">
+                </div>
+            </div>
+
             <button type="submit">Sign Up</button>
         </form>
         <div class="link">
@@ -89,13 +107,18 @@
             const role = document.getElementById('role').value;
             const candidateFields = document.getElementById('candidate-fields');
             const employerFields = document.getElementById('employer-fields');
+            const trainerFields = document.getElementById('trainer-fields');
+
+            candidateFields.classList.add('hidden');
+            employerFields.classList.add('hidden');
+            trainerFields.classList.add('hidden');
 
             if (role === 'Candidate') {
                 candidateFields.classList.remove('hidden');
-                employerFields.classList.add('hidden');
-            } else {
-                candidateFields.classList.add('hidden');
+            } else if (role === 'Employer') {
                 employerFields.classList.remove('hidden');
+            } else if (role === 'Trainer') {
+                trainerFields.classList.remove('hidden');
             }
         }
         // Run once on load

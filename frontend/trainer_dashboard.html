@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HireUp - Trainer Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="nav" style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>Trainer Dashboard</h2>
+            <button onclick="logout()">Logout</button>
+        </div>
+
+        <div id="trainer-actions">
+            <h3>Create New Course</h3>
+            <form onsubmit="createCourse(event)" style="margin-bottom: 2rem; border: 1px solid #ddd; padding: 1rem;">
+                <div class="form-group">
+                    <label>Course Title</label>
+                    <input type="text" id="title" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="description" rows="3"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Duration (Days)</label>
+                    <input type="number" id="duration_days" required min="1">
+                </div>
+                <div class="form-group">
+                    <label>Mode</label>
+                    <select id="mode">
+                        <option value="Online">Online</option>
+                        <option value="Offline">Offline</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Fee</label>
+                    <input type="number" id="fee" step="0.01" min="0">
+                </div>
+
+                <!-- Skill Selection -->
+                <div class="form-group">
+                    <label>Skills Taught</label>
+                    <div style="display: flex; gap: 10px;">
+                        <select id="skill-selector" style="flex: 1;">
+                            <option value="">-- Select a Skill --</option>
+                            <option value="NEW">-- Create New Skill --</option>
+                        </select>
+                        <button type="button" onclick="addSelectedSkill()">Add</button>
+                    </div>
+                </div>
+
+                <!-- New Skill Input (Hidden by default) -->
+                <div id="new-skill-container" class="form-group hidden">
+                    <label>New Skill Name</label>
+                    <input type="text" id="new-skill-name" placeholder="Enter skill name">
+                </div>
+
+                <!-- Selected Skills List -->
+                <div class="form-group">
+                    <label>Selected Skills:</label>
+                    <div id="selected-skills-tags" style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px;">
+                        <!-- Tags will appear here -->
+                    </div>
+                </div>
+                <button type="submit">Publish Course</button>
+            </form>
+
+            <h3>My Courses & Enrollments</h3>
+            <div id="enrollments-list">
+                <!-- Populated via JS -->
+                Loading...
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/trainer.js"></script>
+</body>
+
+</html>
