@@ -116,7 +116,7 @@ CREATE TABLE IF NOT EXISTS job (
   CONSTRAINT chk_job_expiry_future CHECK (expires_at >= CURRENT_DATE)
 );
 
--- REFACTORED: Link to skill table instead of string
+
 CREATE TABLE IF NOT EXISTS job_requirement (
   requirement_id   BIGSERIAL PRIMARY KEY,
   job_id           BIGINT NOT NULL REFERENCES job(job_id) ON DELETE CASCADE,
@@ -144,4 +144,47 @@ CREATE TABLE IF NOT EXISTS application (
   CONSTRAINT uq_application_job_candidate UNIQUE (job_id, candidate_id)
 );
 
+
+-- trainer and course tabel created
+
+CREATE TABLE IF NOT EXISTS trainer_profile (
+  trainer_id      BIGSERIAL PRIMARY KEY,
+  user_id         BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  organization_name VARCHAR(150),
+  specialization  VARCHAR(100),
+  contact_number  VARCHAR(30),
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT uq_trainer_user UNIQUE (user_id)
+);
+
+CREATE TABLE IF NOT EXISTS course (
+  course_id       BIGSERIAL PRIMARY KEY,
+  trainer_id      BIGINT NOT NULL REFERENCES trainer_profile(trainer_id) ON DELETE CASCADE,
+  title           VARCHAR(200) NOT NULL,
+  description     TEXT,
+  duration_days   INT CHECK (duration_days > 0),
+  mode            VARCHAR(50) CHECK (mode IN ('Online', 'Offline')),
+  fee             DECIMAL(10, 2) CHECK (fee >= 0),
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS course_skill (
+  course_skill_id BIGSERIAL PRIMARY KEY,
+  course_id       BIGINT NOT NULL REFERENCES course(course_id) ON DELETE CASCADE,
+  skill_id        BIGINT NOT NULL REFERENCES skill(skill_id) ON DELETE CASCADE,
+  CONSTRAINT uq_course_skill UNIQUE (course_id, skill_id)
+);
+
+CREATE TABLE IF NOT EXISTS enrollment (
+  enrollment_id   BIGSERIAL PRIMARY KEY,
+  candidate_id    BIGINT NOT NULL REFERENCES candidate_profile(candidate_id) ON DELETE CASCADE,
+  course_id       BIGINT NOT NULL REFERENCES course(course_id) ON DELETE CASCADE,
+  enrolled_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  completion_status VARCHAR(50) NOT NULL DEFAULT 'In Progress' CHECK (completion_status IN ('In Progress', 'Completed')),
+  CONSTRAINT uq_student_course UNIQUE (candidate_id, course_id)
+);
+
 COMMIT;
+
