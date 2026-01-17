@@ -11,7 +11,11 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
+
+// Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/trainer', require('./routes/trainerRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
 
 // Static files (Frontend)
 app.use(express.static(path.join(__dirname, '../frontend')));

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HireUp - Admin Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .section {
+            margin-bottom: 2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="nav" style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>Admin Dashboard</h2>
+            <button onclick="logout()">Logout</button>
+        </div>
+
+        <div class="section">
+            <h3>Top Skills (By Demand)</h3>
+            <div id="top-skills-list">Loading...</div>
+        </div>
+
+        <div class="section">
+            <h3>Popular Courses</h3>
+            <div id="popular-courses-list">Loading...</div>
+        </div>
+
+        <div class="section">
+            <h3>System Audit Logs</h3>
+            <div id="audit-logs-list">Loading...</div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+
+</html>

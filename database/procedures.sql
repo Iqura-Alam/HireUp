@@ -159,4 +159,179 @@ BEGIN
 END;
 $$;
 
+
+-- trainer and admin procedures created
+
+-- trainer creates a course + skills
+CREATE OR REPLACE PROCEDURE sp_add_course(
+    p_trainer_id BIGINT,
+    p_title VARCHAR,
+    p_description TEXT,
+    p_duration_days INT,
+    p_mode VARCHAR,
+    p_fee DECIMAL,
+    p_skill_ids BIGINT[] -- Array of skill_ids
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_course_id BIGINT;
+    v_skill_id BIGINT;
+BEGIN
+    -- Insert Course
+    INSERT INTO course (trainer_id, title, description, duration_days, mode, fee)
+    VALUES (p_trainer_id, p_title, p_description, p_duration_days, p_mode, p_fee)
+    RETURNING course_id INTO v_course_id;
+
+    -- Insert Skills
+    IF p_skill_ids IS NOT NULL THEN
+        FOREACH v_skill_id IN ARRAY p_skill_ids
+        LOOP
+            INSERT INTO course_skill (course_id, skill_id)
+            VALUES (v_course_id, v_skill_id);
+        END LOOP;
+    END IF;
+END;
+$$;
+
+-- candidate enrolls in a course
+CREATE OR REPLACE PROCEDURE sp_enroll_course(
+    p_candidate_id BIGINT,
+    p_course_id BIGINT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    -- unique enrollment checking
+    IF EXISTS (SELECT 1 FROM enrollment WHERE candidate_id = p_candidate_id AND course_id = p_course_id) THEN
+        RAISE EXCEPTION 'Candidate already enrolled in this course.';
+    END IF;
+
+    INSERT INTO enrollment (candidate_id, course_id)
+    VALUES (p_candidate_id, p_course_id);
+END;
+$$;
+
+-- trainer can mark whether the enrollment is complete
+CREATE OR REPLACE PROCEDURE sp_complete_course(
+    p_enrollment_id BIGINT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    UPDATE enrollment
+    SET completion_status = 'Completed'
+    WHERE enrollment_id = p_enrollment_id;
+END;
+$$;
+
+-- candidate report can be generated via JSON
+CREATE OR REPLACE FUNCTION sp_generate_candidate_report(p_candidate_id BIGINT)
+RETURNS JSONB
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_result JSONB;
+BEGIN
+    SELECT jsonb_build_object(
+        'candidate', (SELECT row_to_json(cp) FROM candidate_profile cp WHERE cp.candidate_id = p_candidate_id),
+        'enrollments', (
+            SELECT jsonb_agg(
+                jsonb_build_object(
+                    'course_title', c.title,
+                    'status', e.completion_status,
+                    'enrolled_at', e.enrolled_at,
+                    'skills_covered', (
+                        SELECT jsonb_agg(s.skill_name)
+                        FROM course_skill cs
+                        JOIN skill s ON s.skill_id = cs.skill_id
+                        WHERE cs.course_id = c.course_id
+                    )
+                )
+            )
+            FROM enrollment e
+            JOIN course c ON c.course_id = e.course_id
+            WHERE e.candidate_id = p_candidate_id
+        )
+    ) INTO v_result;
+
+    RETURN v_result;
+END;
+$$;
+
+-- sp_register_trainer
+CREATE OR REPLACE PROCEDURE sp_register_trainer(
+  p_username VARCHAR,
+  p_email VARCHAR,
+  p_password_hash VARCHAR,
+  p_organization_name VARCHAR,
+  p_specialization VARCHAR,
+  p_contact_number VARCHAR
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_new_user_id BIGINT;
+BEGIN
+  -- 1. Insert into users
+  INSERT INTO users (username, email, password_hash, role)
+  VALUES (p_username, p_email, p_password_hash, 'Trainer')
+  RETURNING user_id INTO v_new_user_id;
+
+  -- 2. Insert into trainer_profile
+  INSERT INTO trainer_profile (user_id, organization_name, specialization, contact_number)
+  VALUES (v_new_user_id, p_organization_name, p_specialization, p_contact_number);
+END;
+$$;
+
+-- fn_recommend_courses
+CREATE OR REPLACE FUNCTION fn_recommend_courses(p_candidate_id BIGINT)
+RETURNS TABLE (
+    course_id BIGINT,
+    title VARCHAR,
+    missing_skills TEXT[]
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    WITH candidate_missing_skills AS (
+        SELECT DISTINCT jr.skill_id
+        FROM job_requirement jr
+        WHERE jr.skill_id NOT IN (
+            SELECT cs.skill_id FROM candidate_skill cs WHERE cs.candidate_id = p_candidate_id
+        )
+    )
+    SELECT 
+        c.course_id,
+        c.title,
+        ARRAY_AGG(s.skill_name) AS missing_skills_taught
+    FROM course c
+    JOIN course_skill cs ON c.course_id = cs.course_id
+    JOIN skill s ON s.skill_id = cs.skill_id
+    JOIN candidate_missing_skills cms ON cms.skill_id = cs.skill_id
+    GROUP BY c.course_id, c.title;
+END;
+$$;
+
+-- fn_top_skills
+CREATE OR REPLACE FUNCTION fn_top_skills()
+RETURNS TABLE (
+    skill_name VARCHAR,
+    demand_count BIGINT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT s.skill_name, COUNT(jr.job_id) as demand_count
+    FROM skill s
+    JOIN job_requirement jr ON s.skill_id = jr.skill_id
+    GROUP BY s.skill_name
+    ORDER BY demand_count DESC
+    LIMIT 10;
+END;
+$$;
+
 COMMIT;
+

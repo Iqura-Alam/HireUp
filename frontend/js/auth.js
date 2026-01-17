@@ -1,3 +1,4 @@
+
 const API_URL = 'http://localhost:5000/api/auth';
 
 async function register(event) {
@@ -31,6 +32,14 @@ async function register(event) {
         payload.industry = industry;
         payload.contact_number = contactNumber;
         payload.website = website;
+    } else if (role === 'Trainer') {
+        const organizationName = document.getElementById('organization_name').value;
+        const specialization = document.getElementById('specialization').value;
+        const contactNumber = document.getElementById('trainer_contact').value;
+
+        payload.organization_name = organizationName;
+        payload.specialization = specialization;
+        payload.contact_number = contactNumber;
     }
 
     const errorDiv = document.getElementById('error-message');
@@ -83,10 +92,17 @@ async function login(event) {
             // Custom alert based on role
             if (data.user.role === 'Employer') {
                 alert(`Welcome, ${data.user.username}! Your Company Profile is ready.`);
+                window.location.href = 'index.html';
+            } else if (data.user.role === 'Trainer') {
+                alert(`Welcome, Trainer ${data.user.username}!`);
+                window.location.href = 'trainer_dashboard.html';
+            } else if (data.user.role === 'Admin') {
+                alert(`Welcome Admin!`);
+                window.location.href = 'admin_dashboard.html';
             } else {
                 alert(`Welcome back, ${data.user.username}!`);
+                window.location.href = 'index.html';
             }
-            window.location.href = 'index.html'; // Redirect to dashboard/home
         } else {
             errorDiv.textContent = data.message || 'Login failed';
         }
