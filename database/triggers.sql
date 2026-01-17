@@ -168,4 +168,63 @@ CREATE TRIGGER trg_application_audit
 AFTER INSERT ON application
 FOR EACH ROW EXECUTE FUNCTION fn_audit_application_insert();
 
+
+-- triggers for trainer and admin
+
+-- to update candidate skills when course is completed
+CREATE OR REPLACE FUNCTION fn_trg_course_completion()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    r_skill RECORD;
+BEGIN
+    IF OLD.completion_status <> 'Completed' AND NEW.completion_status = 'Completed' THEN
+        -- Loop through skills taught in the course
+        FOR r_skill IN 
+            SELECT skill_id FROM course_skill WHERE course_id = NEW.course_id
+        LOOP
+            -- Upsert skill for candidate
+            INSERT INTO candidate_skill (candidate_id, skill_id, proficiency_level)
+            VALUES (NEW.candidate_id, r_skill.skill_id, 'Beginner') -- Default to Beginner on completion
+            ON CONFLICT (candidate_id, skill_id) 
+            DO UPDATE SET proficiency_level = 'Intermediate'; -- Upgrade if already exists (simple logic)
+        END LOOP;
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_course_completion ON enrollment;
+CREATE TRIGGER trg_course_completion
+AFTER UPDATE ON enrollment
+FOR EACH ROW
+EXECUTE FUNCTION fn_trg_course_completion();
+
+-- auditing od enrollment
+CREATE OR REPLACE FUNCTION fn_trg_audit_course()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    -- Using existing audit_log table
+    INSERT INTO audit_log (table_name, operation, record_id, new_data, changed_by)
+    VALUES (
+        'enrollment', 
+        'ENROLL', 
+        NEW.enrollment_id, 
+        jsonb_build_object('candidate_id', NEW.candidate_id, 'course_id', NEW.course_id),
+        (SELECT user_id FROM candidate_profile WHERE candidate_id = NEW.candidate_id) 
+    );
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_audit_course ON enrollment;
+CREATE TRIGGER trg_audit_course
+AFTER INSERT ON enrollment
+FOR EACH ROW
+EXECUTE FUNCTION fn_trg_audit_course();
+
 COMMIT;
+
