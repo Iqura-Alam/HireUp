@@ -11,6 +11,11 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'job_status') THEN
     CREATE TYPE job_status AS ENUM ('Open', 'Closed');
   END IF;
+  
+  -- Skill Types
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'skill_type') THEN
+    CREATE TYPE skill_type AS ENUM ('Technical', 'Soft', 'Tool', 'Domain');
+  END IF;
 END$$;
 
 -- USERS & ROLES
@@ -31,30 +36,131 @@ CREATE TABLE IF NOT EXISTS users (
   email            VARCHAR(100) NOT NULL UNIQUE,
   password_hash    VARCHAR(255) NOT NULL,
   role             user_role NOT NULL,
+  
+  -- Account Status & Health
+  is_active        BOOLEAN NOT NULL DEFAULT TRUE,
+  email_verified_at TIMESTAMPTZ,
+  last_login_at    TIMESTAMPTZ,
+  password_reset_token_hash VARCHAR(255),
+  password_reset_expires_at TIMESTAMPTZ,
+  
+  -- Profile / Soft Delete
+  avatar_url       VARCHAR(255),
+  deleted_at       TIMESTAMPTZ,
+  
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
--- CANDIDATE MODULE
+-- CANDIDATE MODULE 
 CREATE TABLE IF NOT EXISTS candidate_profile (
-  candidate_id     BIGINT PRIMARY KEY, -- Same as users.user_id for 1:1 mapping
-  full_name        VARCHAR(100) NOT NULL,
+  candidate_id     BIGINT PRIMARY KEY, 
+  
+  -- 1. Identity
+  first_name       VARCHAR(50) NOT NULL,
+  last_name        VARCHAR(50) NOT NULL,
+  -- Auto-generated Full Name (Critical for your Views)
+  full_name        VARCHAR(101) GENERATED ALWAYS AS (first_name || ' ' || last_name) STORED,
+
+  headline         VARCHAR(150),
+  summary          TEXT,
   dob              DATE,
-  location         VARCHAR(120),
-  experience_years INT CHECK (experience_years >= 0),
-  contact_number   VARCHAR(30),
+  gender           VARCHAR(10), --(Male/Female/Other)
+  
+  -- 2. Localized Address & Contact
+  contact_number   VARCHAR(30), 
+  street_address   VARCHAR(255), 
+  city             VARCHAR(100), 
+  division         VARCHAR(50),  
+  zip_code         VARCHAR(10),  
+  country          VARCHAR(100) DEFAULT 'Bangladesh',
+  timezone         VARCHAR(50) DEFAULT 'Asia/Dhaka',
+  
+  -- 3. Job Preferences
+  desired_job_title VARCHAR(100),
+  employment_type   VARCHAR(50), 
+  work_mode_preference VARCHAR(50), 
+  expected_salary_min DECIMAL(12, 2),
+  expected_salary_max DECIMAL(12, 2),
+  currency          VARCHAR(10) DEFAULT 'BDT',
+  notice_period_days INT,
+  willing_to_relocate BOOLEAN DEFAULT FALSE,
+  
+  -- 4. Professional Links
+  linkedin_url      VARCHAR(200),
+  github_url        VARCHAR(200),
+  portfolio_url     VARCHAR(200),
+  resume_url        VARCHAR(200),
+  resume_updated_at TIMESTAMPTZ,
+  
+  experience_years INT CHECK (experience_years >= 0), 
+  
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   
   CONSTRAINT fk_candidate_user FOREIGN KEY (candidate_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
+-- Candidate Education
+CREATE TABLE IF NOT EXISTS candidate_education (
+    education_id    BIGSERIAL PRIMARY KEY,
+    candidate_id    BIGINT NOT NULL REFERENCES candidate_profile(candidate_id) ON DELETE CASCADE,
+    institution     VARCHAR(150) NOT NULL,
+    degree          VARCHAR(150),
+    field_of_study  VARCHAR(100),
+    start_date      DATE,
+    end_date        DATE, -- Nullable for 'Present'
+    grade           VARCHAR(50),
+    description     TEXT,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Candidate Experience
+CREATE TABLE IF NOT EXISTS candidate_experience (
+    experience_id   BIGSERIAL PRIMARY KEY,
+    candidate_id    BIGINT NOT NULL REFERENCES candidate_profile(candidate_id) ON DELETE CASCADE,
+    company_name    VARCHAR(150) NOT NULL,
+    title           VARCHAR(100) NOT NULL,
+    location        VARCHAR(100),
+    start_date      DATE NOT NULL,
+    end_date        DATE, -- Nullable for 'Present'
+    is_current      BOOLEAN DEFAULT FALSE,
+    description     TEXT,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Candidate Projects
+CREATE TABLE IF NOT EXISTS candidate_project (
+    project_id      BIGSERIAL PRIMARY KEY,
+    candidate_id    BIGINT NOT NULL REFERENCES candidate_profile(candidate_id) ON DELETE CASCADE,
+    title           VARCHAR(150) NOT NULL,
+    description     TEXT,
+    project_url     VARCHAR(200),
+    tech_stack      TEXT[], -- Array of strings
+    start_date      DATE,
+    end_date        DATE,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+
 -- SKILL MODULE
+CREATE TABLE IF NOT EXISTS skill_category (
+    category_id     BIGSERIAL PRIMARY KEY,
+    category_name   VARCHAR(100) NOT NULL UNIQUE,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS skill (
   skill_id         BIGSERIAL PRIMARY KEY,
-  skill_name       VARCHAR(100) NOT NULL UNIQUE,
-  category         VARCHAR(50),
-  created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+  skill_name       VARCHAR(100) NOT NULL,
+  skill_slug       VARCHAR(100) NOT NULL UNIQUE, -- Normalized lowercase
+  category_id      BIGINT REFERENCES skill_category(category_id) ON DELETE SET NULL,
+  
+  description      TEXT,
+  type             skill_type DEFAULT 'Technical',
+  is_active        BOOLEAN DEFAULT TRUE,
+  
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS candidate_skill (
@@ -62,6 +168,10 @@ CREATE TABLE IF NOT EXISTS candidate_skill (
   candidate_id       BIGINT NOT NULL REFERENCES candidate_profile(candidate_id) ON DELETE CASCADE,
   skill_id           BIGINT NOT NULL REFERENCES skill(skill_id) ON DELETE CASCADE,
   proficiency_level  skill_proficiency NOT NULL DEFAULT 'Beginner',
+  
+  years_of_experience NUMERIC(4,1),
+  last_used_at       DATE,
+  is_primary         BOOLEAN DEFAULT FALSE,
   
   created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -85,7 +195,7 @@ CREATE TABLE IF NOT EXISTS audit_log (
 CREATE TABLE IF NOT EXISTS employer (
   employer_id      BIGSERIAL PRIMARY KEY,
   -- Link employer to user if they have a login
-  -- user_id       BIGINT UNIQUE REFERENCES users(user_id), 
+  user_id       BIGINT UNIQUE REFERENCES users(user_id) ON DELETE CASCADE,
   company_name     VARCHAR(120) NOT NULL,
   industry         VARCHAR(80),
   location         VARCHAR(120),
