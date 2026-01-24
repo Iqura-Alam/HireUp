@@ -6,40 +6,33 @@ async function register(event) {
     const username = document.getElementById('username').value;
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
-    const fullName = document.getElementById('full_name').value;
     const role = document.getElementById('role').value;
-    const location = document.getElementById('location').value;
 
     let payload = {
         username,
         email,
         password,
-        full_name: fullName,
-        user_role: role,
-        location
+        user_role: role
     };
 
     if (role === 'Candidate') {
-        const experience = document.getElementById('experience').value;
-        payload.experience_years = experience;
+        payload.first_name = document.getElementById('first_name').value;
+        payload.last_name = document.getElementById('last_name').value;
+        payload.city = document.getElementById('city').value;
+        payload.division = document.getElementById('division').value;
+        payload.country = document.getElementById('country').value;
+        payload.experience_years = document.getElementById('experience').value;
     } else if (role === 'Employer') {
-        const companyName = document.getElementById('company_name').value;
-        const industry = document.getElementById('industry').value;
-        const contactNumber = document.getElementById('contact_number').value;
-        const website = document.getElementById('website').value;
-
-        payload.company_name = companyName;
-        payload.industry = industry;
-        payload.contact_number = contactNumber;
-        payload.website = website;
+        payload.company_name = document.getElementById('company_name').value;
+        payload.industry = document.getElementById('industry').value;
+        payload.contact_number = document.getElementById('contact_number').value;
+        payload.website = document.getElementById('website').value;
+        payload.location = document.getElementById('emp_location').value;
     } else if (role === 'Trainer') {
-        const organizationName = document.getElementById('organization_name').value;
-        const specialization = document.getElementById('specialization').value;
-        const contactNumber = document.getElementById('trainer_contact').value;
-
-        payload.organization_name = organizationName;
-        payload.specialization = specialization;
-        payload.contact_number = contactNumber;
+        payload.organization_name = document.getElementById('organization_name').value;
+        payload.specialization = document.getElementById('specialization').value;
+        payload.contact_number = document.getElementById('trainer_contact').value;
+        payload.location = document.getElementById('trainer_location').value;
     }
 
     const errorDiv = document.getElementById('error-message');
@@ -101,7 +94,7 @@ async function login(event) {
                 window.location.href = 'admin_dashboard.html';
             } else {
                 alert(`Welcome back, ${data.user.username}!`);
-                window.location.href = 'index.html';
+                window.location.href = 'candidate_dashboard.html';
             }
         } else {
             errorDiv.textContent = data.message || 'Login failed';
