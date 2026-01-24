@@ -131,7 +131,7 @@ CREATE TRIGGER trg_candidate_profile_set_updated_at
 BEFORE UPDATE ON candidate_profile
 FOR EACH ROW EXECUTE FUNCTION fn_set_updated_at();
 
--- skill (usually static but good to have)
+-- skill 
 DROP TRIGGER IF EXISTS trg_skill_set_updated_at ON skill;
 CREATE TRIGGER trg_skill_set_updated_at
 BEFORE UPDATE ON skill
@@ -157,7 +157,7 @@ BEGIN
       'candidate_id', NEW.candidate_id,
       'status', NEW.status
     ),
-    NULL -- Could be NEW.candidate_id if we assume candidate triggered it
+    NEW.candidate_id 
   );
   RETURN NEW;
 END;
@@ -214,7 +214,7 @@ BEGIN
         'ENROLL', 
         NEW.enrollment_id, 
         jsonb_build_object('candidate_id', NEW.candidate_id, 'course_id', NEW.course_id),
-        (SELECT user_id FROM candidate_profile WHERE candidate_id = NEW.candidate_id) 
+        NEW.candidate_id
     );
     RETURN NEW;
 END;

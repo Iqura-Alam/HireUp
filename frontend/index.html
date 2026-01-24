@@ -29,24 +29,46 @@
 <body>
     <div id="splash-screen">
         <div class="splash-content">
-            <h1 class="logo-text">HireUp</h1>
+            <h1 class="logo-text"
+                style="font-family: 'Outfit', sans-serif; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                HireUp</h1>
             <p>Connecting Talent with Opportunity</p>
             <div class="loader"></div>
         </div>
     </div>
-    <div class="container fade-in">
-        <h1>Welcome to HireUp</h1>
-        <p>Connecting Talent with Opportunity</p>
 
-        <div id="auth-links" class="nav">
-            <a href="login.html">Login</a>
-            <a href="register.html">Register</a>
+    <!-- Centered Hero Container -->
+    <div style="margin: auto; text-align: center; padding: 2rem;">
+        <h1
+            style="font-size: 3.5rem; margin-bottom: 0.5rem; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            Welcome to HireUp
+        </h1>
+        <p style="font-size: 1.25rem; color: var(--text-muted); margin-bottom: 3rem;">
+            Connecting top talent with world-class opportunities.
+        </p>
+
+        <div id="auth-links" style="display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap;">
+            <div class="card" style="width: 200px; padding: 2rem; cursor: pointer; transition: 0.3s;"
+                onclick="location.href='login.html'">
+                <h3>Login</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Access your account</p>
+                <button class="btn" style="margin-top: 1rem;">Login</button>
+            </div>
+
+            <div class="card" style="width: 200px; padding: 2rem; cursor: pointer; transition: 0.3s;"
+                onclick="location.href='register.html'">
+                <h3>Register</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Join as Talent or Employer</p>
+                <button class="btn"
+                    style="background: transparent; border: 1px solid rgba(255,255,255,0.2); margin-top: 1rem;">Sign
+                    Up</button>
+            </div>
         </div>
 
-        <div id="user-info" style="display: none;">
-            <h3>Hello, <span id="username-display">User</span>!</h3>
-            <p>You are logged in as <span id="role-display">Guest</span>.</p>
-            <button onclick="logout()" style="width: auto; margin-top: 1rem;">Logout</button>
+        <div id="user-info" class="container" style="display: none; max-width: 400px; margin-top: 2rem;">
+            <h3>Hello, <span id="username-display" style="color: #a855f7;">User</span>!</h3>
+            <p>You are logged in as <span id="role-display" style="font-weight: bold;">Guest</span>.</p>
+            <button onclick="logout()" style="width: auto; margin-top: 1rem; background: #ef4444;">Logout</button>
         </div>
     </div>
 
@@ -68,16 +90,11 @@
         window.addEventListener('load', () => {
             setTimeout(() => {
                 const splash = document.getElementById('splash-screen');
-                const mainContent = document.querySelector('.container');
-
                 splash.classList.add('fade-out');
-                mainContent.classList.add('visible');
-
-                // Remove from DOM after transition
                 setTimeout(() => {
                     splash.style.display = 'none';
                 }, 1000);
-            }, 2000); // 2 seconds display time
+            }, 1000);
         });
     </script>
 </body>

@@ -3,15 +3,18 @@
 TRUNCATE TABLE users, employer, job, skill, candidate_profile, application, audit_log CASCADE;
 
 -- 1. Create Candidate via Procedure (Tests sp_register_candidate)
-CALL sp_register_candidate('alice_cand', 'alice@example.com', 'hashed_pw_1', 'Alice Wonderland', 'New York', 3);
+CALL sp_register_candidate('alice_cand', 'alice@example.com', 'hashed_pw_1', 'Alice', 'Wonderland', 'New York', 'NY', 'USA', 3);
 
 -- Create Admin & Employer manually (Procedures not defined for these yet)
 INSERT INTO users (username, email, password_hash, role) VALUES 
 ('charlie_admin', 'admin@hireup.com', 'hashed_pw_3', 'Admin'),
 ('bob_empl', 'bob@company.com', 'hashed_pw_2', 'Employer');
 
-INSERT INTO employer (company_name, industry, email) 
-VALUES ('TechCorp', 'Software', 'contact@techcorp.com');
+INSERT INTO employer (user_id, company_name, industry, email) 
+VALUES (
+  (SELECT user_id FROM users WHERE username='bob_empl'),
+  'TechCorp', 'Software', 'contact@techcorp.com'
+);
 
 -- 2. Add Skills via Procedure (Tests sp_add_candidate_skill)
 DO $$

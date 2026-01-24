@@ -12,7 +12,6 @@ SELECT
   j.expires_at,
   j.status,
   j.created_at,
-
   e.employer_id,
   e.company_name,
   e.industry,
@@ -66,7 +65,9 @@ SELECT
   u.role,
   c.full_name,
   c.dob,
-  c.location,
+  c.city,
+  c.division,
+  c.country,
   c.experience_years,
   c.contact_number,
   
@@ -75,7 +76,7 @@ SELECT
     jsonb_agg(
       jsonb_build_object(
         'skill_name', s.skill_name,
-        'category', s.category,
+        'category', sc.category_name,
         'proficiency', cs.proficiency_level
       )
     ) FILTER (WHERE s.skill_id IS NOT NULL),
@@ -86,6 +87,7 @@ FROM users u
 JOIN candidate_profile c ON c.candidate_id = u.user_id
 LEFT JOIN candidate_skill cs ON cs.candidate_id = c.candidate_id
 LEFT JOIN skill s ON s.skill_id = cs.skill_id
+LEFT JOIN skill_category sc ON s.category_id = sc.category_id
 GROUP BY u.user_id, c.candidate_id;
 
 -- Candidate Applications View
@@ -112,13 +114,14 @@ JOIN employer e ON e.employer_id = j.employer_id;
 CREATE OR REPLACE VIEW vw_top_skills AS
 SELECT
   s.skill_name,
-  s.category,
+  sc.category_name as category,
   COUNT(jr.requirement_id) AS demand_count
 FROM skill s
+LEFT JOIN skill_category sc ON s.category_id = sc.category_id
 JOIN job_requirement jr ON jr.skill_id = s.skill_id
 JOIN job j ON j.job_id = jr.job_id
 WHERE j.status = 'Open' AND j.expires_at >= CURRENT_DATE
-GROUP BY s.skill_id, s.skill_name
+GROUP BY s.skill_id, s.skill_name, sc.category_name
 ORDER BY demand_count DESC;
 
 

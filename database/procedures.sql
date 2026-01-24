@@ -72,18 +72,21 @@ BEGIN
 END;
 $$;
 
--- Existing procedures...
+
 COMMIT;
 
 BEGIN;
 
--- Procedure to register a new candidate (Transactional: User + Profile)
+-- Procedure to register a new candidate 
 CREATE OR REPLACE PROCEDURE sp_register_candidate(
   p_username VARCHAR,
   p_email VARCHAR,
   p_password_hash VARCHAR,
-  p_full_name VARCHAR,
-  p_location VARCHAR,
+  p_first_name VARCHAR,
+  p_last_name VARCHAR,
+  p_city VARCHAR,       
+  p_division VARCHAR,   
+  p_country VARCHAR,    
   p_experience_years INT
 )
 LANGUAGE plpgsql
@@ -91,21 +94,34 @@ AS $$
 DECLARE
   v_new_user_id BIGINT;
 BEGIN
-  -- 1. Insert into users
+  -- Insert into users
   INSERT INTO users (username, email, password_hash, role)
   VALUES (p_username, p_email, p_password_hash, 'Candidate')
   RETURNING user_id INTO v_new_user_id;
 
-  -- 2. Insert into candidate_profile
-  INSERT INTO candidate_profile (candidate_id, full_name, location, experience_years)
-  VALUES (v_new_user_id, p_full_name, p_location, p_experience_years);
-  
-  -- Commit is handled by the caller or implicit, but within PL/pgSQL usually we let the transaction handle it.
-  -- Note: Procedures can control transactions, but nested calls need care.
+  -- Insert into candidate_profile
+  INSERT INTO candidate_profile (
+      candidate_id, 
+      first_name, 
+      last_name, 
+      city, 
+      division, 
+      country, 
+      experience_years
+  )
+  VALUES (
+      v_new_user_id, 
+      p_first_name, 
+      p_last_name, 
+      p_city, 
+      p_division, 
+      p_country, 
+      p_experience_years
+  );
 END;
 $$;
 
--- Procedure to register a new employer (Transactional: User + Profile)
+-- Procedure to register a new employer
 CREATE OR REPLACE PROCEDURE sp_register_employer(
   p_username VARCHAR,
   p_email VARCHAR,
@@ -121,41 +137,42 @@ AS $$
 DECLARE
   v_new_user_id BIGINT;
 BEGIN
-  -- 1. Insert into users
+  -- into users
   INSERT INTO users (username, email, password_hash, role)
   VALUES (p_username, p_email, p_password_hash, 'Employer')
   RETURNING user_id INTO v_new_user_id;
 
-  -- 2. Insert into employer
-  INSERT INTO employer (user_id, company_name, industry, location, contact_number, website)
-  VALUES (v_new_user_id, p_company_name, p_industry, p_location, p_contact_number, p_website);
+  -- Insert into employer
+  INSERT INTO employer (user_id, company_name, industry, location, contact_number, website, email)
+  VALUES (v_new_user_id, p_company_name, p_industry, p_location, p_contact_number, p_website, p_email);
 END;
 $$;
 
 -- Procedure to add or update a candidate skill
 CREATE OR REPLACE PROCEDURE sp_add_candidate_skill(
   p_candidate_id BIGINT,
-  p_skill_name VARCHAR,
-  p_proficiency skill_proficiency
+  p_skill_id BIGINT,
+  p_proficiency skill_proficiency,
+  p_years_exp NUMERIC DEFAULT 0,
+  p_custom_name VARCHAR DEFAULT NULL
 )
 LANGUAGE plpgsql
 AS $$
-DECLARE
-  v_skill_id BIGINT;
 BEGIN
-  -- 1. Find or Create Skill (Simple check)
-  SELECT skill_id INTO v_skill_id FROM skill WHERE skill_name = p_skill_name;
-  
-  IF v_skill_id IS NULL THEN
-    INSERT INTO skill(skill_name, category) VALUES (p_skill_name, 'Uncategorized')
-    RETURNING skill_id INTO v_skill_id;
+  -- 1. Validation (Simple)
+  IF p_skill_id = 0 AND p_custom_name IS NULL THEN
+     RAISE EXCEPTION 'Custom skill name required for "Other" skill';
   END IF;
 
   -- 2. Upsert Candidate Skill
-  INSERT INTO candidate_skill (candidate_id, skill_id, proficiency_level)
-  VALUES (p_candidate_id, v_skill_id, p_proficiency)
+  INSERT INTO candidate_skill (candidate_id, skill_id, proficiency_level, years_of_experience, custom_skill_name)
+  VALUES (p_candidate_id, p_skill_id, p_proficiency, p_years_exp, p_custom_name)
   ON CONFLICT (candidate_id, skill_id) 
-  DO UPDATE SET proficiency_level = EXCLUDED.proficiency_level, updated_at = now();
+  DO UPDATE SET 
+      proficiency_level = EXCLUDED.proficiency_level, 
+      years_of_experience = EXCLUDED.years_of_experience,
+      custom_skill_name = EXCLUDED.custom_skill_name,
+      updated_at = now();
 END;
 $$;
 
@@ -234,9 +251,36 @@ DECLARE
     v_result JSONB;
 BEGIN
     SELECT jsonb_build_object(
-        'candidate', (SELECT row_to_json(cp) FROM candidate_profile cp WHERE cp.candidate_id = p_candidate_id),
+        'candidate', (
+            SELECT jsonb_build_object(
+                'candidate_id', cp.candidate_id,
+                'first_name', cp.first_name,
+                'last_name', cp.last_name,
+                'full_name', cp.full_name,
+                'email', u.email,
+                'city', cp.city,
+                'division', cp.division,
+                'country', cp.country,
+                'experience_years', cp.experience_years
+            )
+            FROM candidate_profile cp
+            JOIN users u ON u.user_id = cp.candidate_id
+            WHERE cp.candidate_id = p_candidate_id
+        ),
+        'skills', (
+            SELECT COALESCE(jsonb_agg(
+                jsonb_build_object(
+                    'skill_name', COALESCE(cs.custom_skill_name, s.skill_name),
+                    'proficiency', cs.proficiency_level,
+                    'years', cs.years_of_experience
+                )
+            ), '[]'::jsonb)
+            FROM candidate_skill cs
+            JOIN skill s ON s.skill_id = cs.skill_id
+            WHERE cs.candidate_id = p_candidate_id
+        ),
         'enrollments', (
-            SELECT jsonb_agg(
+            SELECT COALESCE(jsonb_agg(
                 jsonb_build_object(
                     'course_title', c.title,
                     'status', e.completion_status,
@@ -248,7 +292,7 @@ BEGIN
                         WHERE cs.course_id = c.course_id
                     )
                 )
-            )
+            ), '[]'::jsonb)
             FROM enrollment e
             JOIN course c ON c.course_id = e.course_id
             WHERE e.candidate_id = p_candidate_id
@@ -273,12 +317,12 @@ AS $$
 DECLARE
   v_new_user_id BIGINT;
 BEGIN
-  -- 1. Insert into users
+  -- Insert into users
   INSERT INTO users (username, email, password_hash, role)
   VALUES (p_username, p_email, p_password_hash, 'Trainer')
   RETURNING user_id INTO v_new_user_id;
 
-  -- 2. Insert into trainer_profile
+  -- Insert into trainer_profile
   INSERT INTO trainer_profile (user_id, organization_name, specialization, contact_number)
   VALUES (v_new_user_id, p_organization_name, p_specialization, p_contact_number);
 END;
