@@ -172,6 +172,7 @@ CREATE TABLE IF NOT EXISTS candidate_skill (
   years_of_experience NUMERIC(4,1),
   last_used_at       DATE,
   is_primary         BOOLEAN DEFAULT FALSE,
+  custom_skill_name  VARCHAR(100), -- For 'Other' skills (skill_id = 0)
   
   created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
