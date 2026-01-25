@@ -249,10 +249,26 @@ CREATE TABLE IF NOT EXISTS application (
   candidate_id     BIGINT NOT NULL REFERENCES candidate_profile(candidate_id) ON DELETE CASCADE,
 
   status           application_status NOT NULL DEFAULT 'Applied',
+  cv_file          BYTEA,
   applied_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
 
   CONSTRAINT uq_application_job_candidate UNIQUE (job_id, candidate_id)
+);
+
+CREATE TABLE IF NOT EXISTS job_question (
+    question_id BIGSERIAL PRIMARY KEY,
+    job_id BIGINT NOT NULL REFERENCES job(job_id) ON DELETE CASCADE,
+    question_text TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS application_answer (
+    answer_id BIGSERIAL PRIMARY KEY,
+    application_id BIGINT NOT NULL REFERENCES application(application_id) ON DELETE CASCADE,
+    question_id BIGINT NOT NULL REFERENCES job_question(question_id) ON DELETE CASCADE,
+    answer_text TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 

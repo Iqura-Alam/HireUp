@@ -69,6 +69,41 @@ BEGIN
   UPDATE application
   SET status = 'Hired'
   WHERE application_id = p_application_id;
+
+  -- Close the job
+  UPDATE job
+  SET status = 'Closed'
+  WHERE job_id = v_job_id;
+END;
+$$;
+
+CREATE OR REPLACE PROCEDURE sp_reject_application(
+  p_employer_id BIGINT,
+  p_application_id BIGINT
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_job_id BIGINT;
+BEGIN
+  SELECT a.job_id INTO v_job_id
+  FROM application a
+  WHERE a.application_id = p_application_id;
+
+  IF v_job_id IS NULL THEN
+    RAISE EXCEPTION 'Application % not found', p_application_id;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM job j
+    WHERE j.job_id = v_job_id AND j.employer_id = p_employer_id
+  ) THEN
+    RAISE EXCEPTION 'Not authorized: employer % does not own this job', p_employer_id;
+  END IF;
+
+  UPDATE application
+  SET status = 'Rejected'
+  WHERE application_id = p_application_id;
 END;
 $$;
 
@@ -413,13 +448,15 @@ CREATE OR REPLACE PROCEDURE sp_post_job(
     p_salary_range VARCHAR,
     p_expires_at DATE,
     p_skill_ids BIGINT[], -- Array of skill_ids
-    p_min_proficiencies skill_proficiency[] -- Array of proficiencies corresponding to skills
+    p_min_proficiencies skill_proficiency[], -- Array of proficiencies corresponding to skills
+    p_questions TEXT[] -- Array of questions
 )
 LANGUAGE plpgsql
 AS $$
 DECLARE
     v_job_id BIGINT;
     i INT;
+    v_question_text TEXT;
 BEGIN
     -- Insert Job
     INSERT INTO job (employer_id, title, description, location, salary_range, expires_at)
@@ -432,6 +469,42 @@ BEGIN
         LOOP
             INSERT INTO job_requirement (job_id, skill_id, minimum_proficiency)
             VALUES (v_job_id, p_skill_ids[i], p_min_proficiencies[i]);
+        END LOOP;
+    END IF;
+
+    -- Insert Job Questions
+    IF p_questions IS NOT NULL THEN
+        FOREACH v_question_text IN ARRAY p_questions
+        LOOP
+            INSERT INTO job_question (job_id, question_text)
+            VALUES (v_job_id, v_question_text);
+        END LOOP;
+    END IF;
+END;
+$$;
+
+CREATE OR REPLACE PROCEDURE sp_apply_for_job_custom(
+    p_candidate_id BIGINT,
+    p_job_id BIGINT,
+    p_cv_file BYTEA,
+    p_question_ids BIGINT[],
+    p_answers TEXT[]
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_application_id BIGINT;
+    i INT;
+BEGIN
+    INSERT INTO application(job_id, candidate_id, status, cv_file)
+    VALUES (p_job_id, p_candidate_id, 'Applied', p_cv_file)
+    RETURNING application_id INTO v_application_id;
+
+    IF p_question_ids IS NOT NULL THEN
+        FOR i IN 1 .. array_length(p_question_ids, 1)
+        LOOP
+            INSERT INTO application_answer (application_id, question_id, answer_text)
+            VALUES (v_application_id, p_question_ids[i], p_answers[i]);
         END LOOP;
     END IF;
 END;
