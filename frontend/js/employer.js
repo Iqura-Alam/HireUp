@@ -150,6 +150,11 @@ async function postJob(e) {
     // Default proficiencies to 'Beginner' for now
     const proficiencies = skillIds.map(() => 'Beginner');
 
+    // Get Questions
+    const questions = Array.from(document.querySelectorAll('.question-input'))
+        .map(input => input.value.trim())
+        .filter(val => val !== '');
+
     const payload = {
         title: document.getElementById('job-title').value,
         description: document.getElementById('job-desc').value,
@@ -157,7 +162,8 @@ async function postJob(e) {
         salary_range: document.getElementById('job-salary').value,
         expires_at: document.getElementById('job-expiry').value,
         skill_ids: skillIds,
-        min_proficiencies: proficiencies
+        min_proficiencies: proficiencies,
+        questions: questions
     };
 
     try {
@@ -174,10 +180,9 @@ async function postJob(e) {
             alert('Job posted successfully!');
             closeModal('postJobModal');
             loadJobs();
-            // Clear form
             e.target.reset();
-            // Clear Tom Select
             if (skillSelectInstance) skillSelectInstance.clear();
+            document.getElementById('questions-container').innerHTML = ''; // Clear questions
         } else {
             const data = await res.json();
             alert(data.message || 'Failed to post job');
@@ -207,21 +212,39 @@ async function viewApplications(jobId) {
                 let actions = '';
                 if (app.status === 'Applied') {
                     actions = `
-                        <button onclick="updateAppStatus(${app.application_id}, 'shortlist')" class="btn" style="background:var(--primary-color); padding: 0.25rem 0.5rem; font-size: 0.8rem;">Shortlist</button>
+                        <button onclick="updateAppStatus(${app.application_id}, 'shortlist')" class="btn" style="background:var(--primary-color); padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-right: 5px;">Shortlist</button>
+                        <button onclick="updateAppStatus(${app.application_id}, 'reject')" class="btn" style="background:#ef4444; padding: 0.25rem 0.5rem; font-size: 0.8rem;">Reject</button>
                     `;
                 } else if (app.status === 'Shortlisted') {
                     actions = `
-                        <button onclick="updateAppStatus(${app.application_id}, 'hire')" class="btn" style="background:#22c55e; padding: 0.25rem 0.5rem; font-size: 0.8rem;">Hire</button>
+                        <button onclick="updateAppStatus(${app.application_id}, 'hire')" class="btn" style="background:#22c55e; padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-right: 5px;">Hire</button>
+                        <button onclick="updateAppStatus(${app.application_id}, 'reject')" class="btn" style="background:#ef4444; padding: 0.25rem 0.5rem; font-size: 0.8rem;">Reject</button>
                     `;
                 } else {
-                    actions = `<span style="font-weight:bold; color: ${app.status === 'Hired' ? '#22c55e' : 'var(--text-muted)'}">${app.status}</span>`;
+                    let color = 'var(--text-muted)';
+                    if (app.status === 'Hired') color = '#22c55e';
+                    if (app.status === 'Rejected') color = '#ef4444';
+                    actions = `<span style="font-weight:bold; color: ${color}">${app.status}</span>`;
+                }
+
+                let answersHtml = '';
+                if (app.answers && app.answers.length > 0) {
+                    answersHtml = '<div style="margin-top: 0.5rem; background: rgba(255,255,255,0.05); padding: 0.5rem; border-radius: 4px; font-size: 0.85rem;">';
+                    app.answers.forEach(ans => {
+                        if (ans.question_text) {
+                            answersHtml += `<strong>Q: ${ans.question_text}</strong><br>A: ${ans.answer_text}<br>`;
+                        }
+                    });
+                    answersHtml += '</div>';
                 }
 
                 div.innerHTML = `
                     <div>
                         <strong>${app.full_name}</strong> (${app.email})<br>
                         <small>Exp: ${app.experience_years} Years</small><br>
-                        <small>Applied: ${new Date(app.applied_at).toLocaleDateString()}</small>
+                        <small>Applied: ${new Date(app.applied_at).toLocaleDateString()}</small><br>
+                        <a href="javascript:void(0)" onclick="downloadCV(${app.application_id})" style="color: var(--primary-color); font-size: 0.9rem; text-decoration: underline;">Download CV</a>
+                        ${answersHtml}
                     </div>
                     <div>
                         ${actions}
@@ -234,6 +257,33 @@ async function viewApplications(jobId) {
         document.getElementById('applicantsModal').style.display = 'block';
     } catch (err) {
         console.error(err);
+    }
+}
+
+async function downloadCV(appId) {
+    try {
+        const res = await fetch(`${API_BASE}/applications/${appId}/cv`, {
+            headers: { 'x-auth-token': localStorage.getItem('token') }
+        });
+
+        if (!res.ok) {
+            const data = await res.json();
+            alert(data.message || 'Download failed');
+            return;
+        }
+
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `CV_App_${appId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+    } catch (err) {
+        console.error(err);
+        alert('Error downloading CV');
     }
 }
 
@@ -279,4 +329,18 @@ window.onclick = function (event) {
     if (event.target.classList.contains('modal')) {
         event.target.style.display = "none";
     }
+}
+
+function addQuestion() {
+    const container = document.getElementById('questions-container');
+    const div = document.createElement('div');
+    div.style.display = 'flex';
+    div.style.gap = '0.5rem';
+    div.style.marginBottom = '0.5rem';
+
+    div.innerHTML = `
+        <input type="text" class="question-input" placeholder="Enter your question here..." style="flex: 1;">
+        <button type="button" onclick="this.parentElement.remove()" class="btn" style="background: #ef4444; width: auto; padding: 0.5rem;">X</button>
+    `;
+    container.appendChild(div);
 }

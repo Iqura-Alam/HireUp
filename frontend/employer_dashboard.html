@@ -192,6 +192,16 @@
                     </select>
                 </div>
 
+                <div class="form-group">
+                    <label>Custom Questions</label>
+                    <div id="questions-container" style="margin-bottom: 0.5rem;"></div>
+                    <button type="button" onclick="addQuestion()" class="btn"
+                        style="width: auto; padding: 0.5rem 1rem; font-size: 0.8rem; background: rgba(168, 85, 247, 0.2); border: 1px solid rgba(168, 85, 247, 0.5);">+
+                        Add Question</button>
+                    <small style="display:block; color: var(--text-muted); margin-top: 0.25rem;">Candidates will answer
+                        these.</small>
+                </div>
+
                 <div style="display: flex; gap: 1rem; margin-top: 1rem;">
                     <button type="submit" class="btn">Post Job</button>
                     <button type="button" onclick="closeModal('postJobModal')" class="btn"
