@@ -85,7 +85,7 @@ async function login(event) {
             // Custom alert based on role
             if (data.user.role === 'Employer') {
                 alert(`Welcome, ${data.user.username}! Your Company Profile is ready.`);
-                window.location.href = 'index.html';
+                window.location.href = 'employer_dashboard.html';
             } else if (data.user.role === 'Trainer') {
                 alert(`Welcome, Trainer ${data.user.username}!`);
                 window.location.href = 'trainer_dashboard.html';
