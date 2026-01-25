@@ -12,6 +12,8 @@ router.get('/jobs/:jobId/applications', auth, employerController.getJobApplicati
 
 router.put('/applications/:applicationId/shortlist', auth, employerController.shortlistApplication);
 router.put('/applications/:applicationId/hire', auth, employerController.hireApplication);
+router.put('/applications/:applicationId/reject', auth, employerController.rejectApplication);
+router.get('/applications/:applicationId/cv', auth, employerController.getApplicationCV);
 
 
 router.get('/skills', auth, employerController.getAllSkills);

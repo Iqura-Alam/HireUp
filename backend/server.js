@@ -20,6 +20,8 @@ app.use('/api/candidate', require('./routes/candidateRoutes'));
 app.use('/api/employer', require('./routes/employerRoutes'));
 
 // Static files (Frontend)
+// Static files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.static(path.join(__dirname, '../frontend')));
 
 // Fallback to index.html
