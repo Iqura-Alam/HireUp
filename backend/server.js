@@ -17,6 +17,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/trainer', require('./routes/trainerRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/candidate', require('./routes/candidateRoutes'));
+app.use('/api/employer', require('./routes/employerRoutes'));
 
 // Static files (Frontend)
 app.use(express.static(path.join(__dirname, '../frontend')));

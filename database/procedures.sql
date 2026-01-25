@@ -379,3 +379,60 @@ $$;
 
 COMMIT;
 
+
+-- Update employer profile
+CREATE OR REPLACE PROCEDURE sp_update_employer_profile(
+    p_user_id BIGINT,
+    p_company_name VARCHAR,
+    p_industry VARCHAR,
+    p_location VARCHAR,
+    p_contact_number VARCHAR,
+    p_website VARCHAR
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    UPDATE employer
+    SET 
+        company_name = p_company_name,
+        industry = p_industry,
+        location = p_location,
+        contact_number = p_contact_number,
+        website = p_website,
+        updated_at = now()
+    WHERE user_id = p_user_id;
+END;
+$$;
+
+-- Post a new job
+CREATE OR REPLACE PROCEDURE sp_post_job(
+    p_employer_id BIGINT,
+    p_title VARCHAR,
+    p_description TEXT,
+    p_location VARCHAR,
+    p_salary_range VARCHAR,
+    p_expires_at DATE,
+    p_skill_ids BIGINT[], -- Array of skill_ids
+    p_min_proficiencies skill_proficiency[] -- Array of proficiencies corresponding to skills
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_job_id BIGINT;
+    i INT;
+BEGIN
+    -- Insert Job
+    INSERT INTO job (employer_id, title, description, location, salary_range, expires_at)
+    VALUES (p_employer_id, p_title, p_description, p_location, p_salary_range, p_expires_at)
+    RETURNING job_id INTO v_job_id;
+
+    -- Insert Job Requirements
+    IF p_skill_ids IS NOT NULL THEN
+        FOR i IN 1 .. array_length(p_skill_ids, 1)
+        LOOP
+            INSERT INTO job_requirement (job_id, skill_id, minimum_proficiency)
+            VALUES (v_job_id, p_skill_ids[i], p_min_proficiencies[i]);
+        END LOOP;
+    END IF;
+END;
+$$;

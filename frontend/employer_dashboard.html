@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HireUp - Employer Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+    <style>
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .job-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+
+        .job-card h4 {
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .applicant-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: #1e1e2e;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid var(--primary-color);
+            width: 80%;
+            max-width: 600px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav
+        style="padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; background: rgba(30, 30, 46, 0.8); backdrop-filter: blur(10px);">
+        <h2
+            style="margin: 0; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.8rem;">
+            HireUp <span style="font-size: 1rem; color: var(--text-muted);">Employer</span>
+        </h2>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <span id="nav-username" style="font-weight: 600; color: var(--text-main);">Company</span>
+            <button onclick="logout()" class="btn"
+                style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); width: auto; padding: 0.5rem 1rem;">Logout</button>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <!-- Left: Company Profile -->
+        <div class="left-col">
+            <div class="card">
+                <h3>Company Profile</h3>
+                <p><strong style="color: var(--text-muted);">Company Name</strong><br> <span
+                        id="comp-name">Loading...</span></p>
+                <div style="height: 1rem;"></div>
+                <p><strong style="color: var(--text-muted);">Industry</strong><br> <span id="comp-industry">...</span>
+                </p>
+                <div style="height: 1rem;"></div>
+                <p><strong style="color: var(--text-muted);">Location</strong><br> <span id="comp-location">...</span>
+                </p>
+                <div style="height: 1rem;"></div>
+                <p><strong style="color: var(--text-muted);">Website</strong><br> <a href="#" id="comp-website"
+                        target="_blank" style="color: var(--primary-color);">...</a></p>
+
+                <button onclick="openEditProfile()" class="btn" style="margin-top: 2rem;">Edit Profile</button>
+            </div>
+        </div>
+
+        <!-- Right: Jobs & Actions -->
+        <div class="right-col">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2 style="margin: 0;">Job Postings</h2>
+                <button onclick="openPostJob()" class="btn" style="width: auto; padding: 0.75rem 2rem;">+ Post New
+                    Job</button>
+            </div>
+
+            <div id="jobs-list">
+                <p style="color: var(--text-muted);">Loading jobs...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="modal">
+        <div class="modal-content">
+            <h3>Edit Company Profile</h3>
+            <form onsubmit="updateProfile(event)">
+                <div class="form-group">
+                    <label>Company Name</label>
+                    <input type="text" id="edit-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Industry</label>
+                    <input type="text" id="edit-industry">
+                </div>
+                <div class="form-group">
+                    <label>Location</label>
+                    <input type="text" id="edit-location">
+                </div>
+                <div class="form-group">
+                    <label>Contact Number</label>
+                    <input type="text" id="edit-contact">
+                </div>
+                <div class="form-group">
+                    <label>Website</label>
+                    <input type="text" id="edit-website">
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <button type="submit" class="btn">Save Changes</button>
+                    <button type="button" onclick="closeModal('editProfileModal')" class="btn"
+                        style="background: transparent; border: 1px solid var(--text-muted);">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Post Job Modal -->
+    <div id="postJobModal" class="modal">
+        <div class="modal-content">
+            <h3>Post a New Job</h3>
+            <form onsubmit="postJob(event)">
+                <div class="form-group">
+                    <label>Job Title</label>
+                    <input type="text" id="job-title" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="job-desc" rows="4"
+                        style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: white; padding: 0.5rem;"
+                        required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Location</label>
+                    <input type="text" id="job-location">
+                </div>
+                <div class="form-group">
+                    <label>Salary Range</label>
+                    <input type="text" id="job-salary" placeholder="e.g. 50k - 80k BDT">
+                </div>
+                <div class="form-group">
+                    <label>Expires At</label>
+                    <input type="date" id="job-expiry" required>
+                </div>
+
+                <!-- Simple Skill Input for now, can be improved -->
+                <div class="form-group">
+                    <label>Required Skills</label>
+                    <select id="job-skills" multiple placeholder="Select required skills...">
+                        <!-- Loaded via JS -->
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <button type="submit" class="btn">Post Job</button>
+                    <button type="button" onclick="closeModal('postJobModal')" class="btn"
+                        style="background: transparent; border: 1px solid var(--text-muted);">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Applicants Modal -->
+    <div id="applicantsModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div style="display: flex; justify-content: space-between;">
+                <h3>Applicants</h3>
+                <button onclick="closeModal('applicantsModal')"
+                    style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div id="applicants-list">
+                <!-- Loaded via JS -->
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/employer.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            loadEmployerProfile();
+            loadJobs();
+            loadSkills();
+        });
+    </script>
+</body>
+
+</html>

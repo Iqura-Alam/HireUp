@@ -1,8 +1,8 @@
 \i tables.sql
 \i indexes.sql
-\i triggers.sql
 \i procedures.sql
+\i triggers.sql
 \i views.sql
-
--- Run test data (Optional: Uncomment to verify immediately)
--- \i test_data.sql
+\i seed_skills.sql
+-- Run test data 
+\i test_data.sql
