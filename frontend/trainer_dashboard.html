@@ -6,78 +6,249 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HireUp - Trainer Dashboard</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .skill-tag {
+            background: rgba(168, 85, 247, 0.2);
+            color: #e2e8f0;
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            margin: 0.25rem;
+            font-size: 0.85rem;
+        }
+
+        h3 {
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-main);
+        }
+
+        .course-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 1.25rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        th {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-in-progress {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+        }
+
+        .status-completed {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+    </style>
 </head>
 
 <body>
-    <div class="container">
-        <div class="nav" style="display: flex; justify-content: space-between; align-items: center;">
-            <h2>Trainer Dashboard</h2>
-            <button onclick="logout()">Logout</button>
+    <!-- Navbar -->
+    <nav
+        style="padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100;">
+        <h2
+            style="margin: 0; background: var(--primary-gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.8rem;">
+            HireUp</h2>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <span id="nav-username" style="font-weight: 600; color: var(--text-main);">Trainer</span>
+            <button onclick="logout()" class="btn"
+                style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); width: auto; padding: 0.5rem 1rem;">Logout</button>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="left-col">
+            <div class="card">
+                <h3>Trainer Profile</h3>
+                <div style="text-align: center; margin-bottom: 1.5rem;">
+                    <div
+                        style="width: 80px; height: 80px; background: var(--primary-gradient); border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; color: white;">
+                        <span id="avatar-initial">T</span>
+                    </div>
+                </div>
+                <!-- <p><strong style="color: var(--text-muted);">Organization</strong><br> <span
+                        id="trainer-org">Loading...</span></p>
+                <div style="height: 1rem;"></div>
+                <p><strong style="color: var(--text-muted);">Specialization</strong><br> <span
+                        id="trainer-spec">...</span></p> -->
+            </div>
+
+            <div class="card">
+                <h3>Quick Stats</h3>
+                <p><strong style="color: var(--text-muted);">Total Courses</strong><br> <span id="stat-courses">0</span>
+                </p>
+                <div style="height: 1rem;"></div>
+                <!-- <p><strong style="color: var(--text-muted);">Total Students</strong><br> <span
+                        id="stat-students">0</span></p> -->
+            </div>
         </div>
 
-        <div id="trainer-actions">
-            <h3>Create New Course</h3>
-            <form onsubmit="createCourse(event)" style="margin-bottom: 2rem; border: 1px solid #ddd; padding: 1rem;">
+        <!-- Main Content -->
+        <div class="right-col">
+            <!-- Create Course -->
+            <div class="card">
+                <h3>Create New Course</h3>
+                <form onsubmit="createCourse(event)">
+                    <div class="form-group">
+                        <label>Course Title</label>
+                        <input type="text" id="title" required placeholder="e.g., Advanced JavaScript Mastery">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="description" rows="3"
+                            style="width:100%; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 8px; color: white; padding: 0.75rem;"></textarea>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Duration (Days)</label>
+                            <input type="number" id="duration_days" required min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>Mode</label>
+                            <select id="mode">
+                                <option value="Online">Online</option>
+                                <option value="Offline">Offline</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Fee (BDT)</label>
+                            <input type="number" id="fee" step="0.01" min="0" value="0">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Skills Taught</label>
+                        <div style="display: flex; gap: 10px;">
+                            <select id="skill-selector" style="flex: 1;">
+                                <option value="">-- Select a Skill --</option>
+                                <option value="NEW">-- Create New Skill --</option>
+                            </select>
+                            <button type="button" onclick="addSelectedSkill()" class="btn"
+                                style="width: auto; padding: 0.5rem 1.5rem;">Add</button>
+                        </div>
+                    </div>
+
+                    <div id="new-skill-container" class="form-group hidden">
+                        <label>New Skill Name</label>
+                        <input type="text" id="new-skill-name" placeholder="Enter skill name">
+                    </div>
+
+                    <div id="selected-skills-tags"
+                        style="display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 1.5rem;"></div>
+
+                    <button type="submit" class="btn">Publish Course</button>
+                </form>
+            </div>
+
+            <!-- My Courses -->
+            <div class="card">
+                <h3>My Published Courses</h3>
+                <div id="courses-list">
+                    <p style="color: var(--text-muted);">Loading courses...</p>
+                </div>
+            </div>
+
+            <!-- Recent Enrollments
+            <div class="card">
+                <h3 id="enrollment-header">Recent Enrollments</h3>
+                <div id="enrollments-list" style="overflow-x: auto;">
+
+                    <p style="color: var(--text-muted);">Loading enrollments...</p>
+                </div>
+            </div>
+        </div>
+    </div> -->
+
+    <!-- Edit Course Modal -->
+    <div id="editCourseModal" class="modal"
+        style="display:none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);">
+        <div class="card" style="max-width: 600px; margin: 2rem auto;">
+            <h3>Edit Course</h3>
+            <form onsubmit="saveCourseEdit(event)">
+                <input type="hidden" id="edit-course-id">
                 <div class="form-group">
                     <label>Course Title</label>
-                    <input type="text" id="title" required>
+                    <input type="text" id="edit-title" required>
                 </div>
                 <div class="form-group">
                     <label>Description</label>
-                    <textarea id="description" rows="3"></textarea>
+                    <textarea id="edit-description" rows="3"
+                        style="width:100%; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 8px; color: white; padding: 0.75rem;"></textarea>
                 </div>
-
-                <div class="form-group">
-                    <label>Duration (Days)</label>
-                    <input type="number" id="duration_days" required min="1">
-                </div>
-                <div class="form-group">
-                    <label>Mode</label>
-                    <select id="mode">
-                        <option value="Online">Online</option>
-                        <option value="Offline">Offline</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Fee</label>
-                    <input type="number" id="fee" step="0.01" min="0">
-                </div>
-
-                <!-- Skill Selection -->
-                <div class="form-group">
-                    <label>Skills Taught</label>
-                    <div style="display: flex; gap: 10px;">
-                        <select id="skill-selector" style="flex: 1;">
-                            <option value="">-- Select a Skill --</option>
-                            <option value="NEW">-- Create New Skill --</option>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Duration (Days)</label>
+                        <input type="number" id="edit-duration_days" required min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Mode</label>
+                        <select id="edit-mode">
+                            <option value="Online">Online</option>
+                            <option value="Offline">Offline</option>
                         </select>
-                        <button type="button" onclick="addSelectedSkill()">Add</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Fee (BDT)</label>
+                        <input type="number" id="edit-fee" step="0.01" min="0">
                     </div>
                 </div>
 
-                <!-- New Skill Input (Hidden by default) -->
-                <div id="new-skill-container" class="form-group hidden">
-                    <label>New Skill Name</label>
-                    <input type="text" id="new-skill-name" placeholder="Enter skill name">
-                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
 
-                <!-- Selected Skills List -->
-                <div class="form-group">
-                    <label>Selected Skills:</label>
-                    <div id="selected-skills-tags" style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px;">
-                        <!-- Tags will appear here -->
-                    </div>
+                    <button type="submit" class="btn">Save Changes</button>
+                    <button type="button" onclick="closeEditModal()" class="btn"
+                        style="background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border);">Cancel</button>
                 </div>
-                <button type="submit">Publish Course</button>
             </form>
-
-            <h3>My Courses & Enrollments</h3>
-            <div id="enrollments-list">
-                <!-- Populated via JS -->
-                Loading...
-            </div>
         </div>
     </div>
+
 
     <script src="js/auth.js"></script>
     <script src="js/trainer.js"></script>

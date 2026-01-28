@@ -138,3 +138,45 @@ exports.getJobDetails = async (req, res) => {
         res.status(500).json({ message: 'Server Error' });
     }
 };
+
+exports.getAllCourses = async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT c.*, tp.organization_name as trainer_name,
+            (
+                SELECT jsonb_agg(s.skill_name)
+                FROM course_skill cs
+                JOIN skill s ON s.skill_id = cs.skill_id
+                WHERE cs.course_id = c.course_id
+            ) as skills_taught,
+            CASE WHEN e.enrollment_id IS NOT NULL THEN TRUE ELSE FALSE END as is_enrolled
+            FROM course c
+            JOIN trainer_profile tp ON tp.trainer_id = c.trainer_id
+            LEFT JOIN enrollment e ON e.course_id = c.course_id AND e.candidate_id = (SELECT candidate_id FROM candidate_profile WHERE candidate_id = $1)
+            ORDER BY c.created_at DESC
+        `, [req.user.id]);
+
+
+
+        res.json(result.rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+exports.enrollInCourse = async (req, res) => {
+    const { courseId } = req.params;
+    const candidateId = req.user.id;
+
+    try {
+        await pool.query('CALL sp_enroll_course($1, $2)', [parseInt(candidateId), parseInt(courseId)]);
+        res.status(200).json({ message: 'Enrolled successfully' });
+    } catch (error) {
+        console.error('Enroll Error:', error);
+        if (error.code === 'P0001' || error.message.includes('already enrolled')) {
+            return res.status(400).json({ message: 'Already enrolled in this course' });
+        }
+        res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+};
