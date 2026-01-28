@@ -10,8 +10,13 @@ router.use(auth);
 
 router.post('/add-course', trainerController.addCourse);
 router.get('/courses', trainerController.getTrainerCourses);
+router.put('/courses/:id', trainerController.updateCourse);
+router.delete('/courses/:id', trainerController.deleteCourse);
+
 router.get('/enrollments', trainerController.getCourseEnrollments);
+router.patch('/enrollments/:id', trainerController.manageEnrollment);
 router.post('/complete-course', trainerController.completeCourse);
+
 
 // Skill management
 router.get('/skills', trainerController.getSkills);

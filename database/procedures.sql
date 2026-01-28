@@ -246,6 +246,8 @@ BEGIN
 END;
 $$;
 
+
+
 -- candidate enrolls in a course
 CREATE OR REPLACE PROCEDURE sp_enroll_course(
     p_candidate_id BIGINT,
@@ -259,10 +261,76 @@ BEGIN
         RAISE EXCEPTION 'Candidate already enrolled in this course.';
     END IF;
 
-    INSERT INTO enrollment (candidate_id, course_id)
-    VALUES (p_candidate_id, p_course_id);
+    INSERT INTO enrollment (candidate_id, course_id, status)
+    VALUES (p_candidate_id, p_course_id, 'Applied');
 END;
 $$;
+
+
+-- trainer manages enrollment status
+CREATE OR REPLACE PROCEDURE sp_manage_enrollment(
+    p_enrollment_id BIGINT,
+    p_status application_status
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    UPDATE enrollment
+    SET status = p_status,
+        updated_at = now()
+    WHERE enrollment_id = p_enrollment_id;
+END;
+$$;
+
+-- Update existing course
+CREATE OR REPLACE PROCEDURE sp_update_course(
+    p_course_id BIGINT,
+    p_title VARCHAR,
+    p_description TEXT,
+    p_duration_days INT,
+    p_mode VARCHAR,
+    p_fee DECIMAL,
+    p_skill_ids BIGINT[]
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_skill_id BIGINT;
+BEGIN
+    UPDATE course
+    SET title = p_title,
+        description = p_description,
+        duration_days = p_duration_days,
+        mode = p_mode,
+        fee = p_fee,
+        updated_at = now()
+    WHERE course_id = p_course_id;
+
+    -- Update Skills
+    DELETE FROM course_skill WHERE course_id = p_course_id;
+    IF p_skill_ids IS NOT NULL THEN
+        FOREACH v_skill_id IN ARRAY p_skill_ids
+        LOOP
+            INSERT INTO course_skill (course_id, skill_id)
+            VALUES (p_course_id, v_skill_id);
+        END LOOP;
+    END IF;
+END;
+$$;
+
+
+-- Delete course
+CREATE OR REPLACE PROCEDURE sp_delete_course(
+    p_course_id BIGINT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    -- Cascade will handle course_skill, enrollment, and course_prerequisite
+    DELETE FROM course WHERE course_id = p_course_id;
+END;
+$$;
+
 
 -- trainer can mark whether the enrollment is complete
 CREATE OR REPLACE PROCEDURE sp_complete_course(
