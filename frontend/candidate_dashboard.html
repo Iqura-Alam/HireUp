@@ -8,64 +8,7 @@
     <link rel="stylesheet" href="css/style.css">
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
-    <style>
-        .dashboard-container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-            display: grid;
-            grid-template-columns: 320px 1fr;
-            /* Fixed sidebar width */
-            gap: 2rem;
-            align-items: start;
-        }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .dashboard-container {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .skill-tag {
-            background: rgba(168, 85, 247, 0.2);
-            color: #e2e8f0;
-            border: 1px solid rgba(168, 85, 247, 0.3);
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            margin: 0.25rem;
-            font-size: 0.9rem;
-        }
-
-        .skill-tag span {
-            color: #fff;
-            font-weight: bold;
-            margin-left: 0.5rem;
-            font-size: 0.8rem;
-        }
-
-        h3 {
-            border-bottom: 1px solid var(--glass-border);
-            padding-bottom: 1rem;
-            margin-bottom: 1.5rem;
-            color: var(--text-main);
-        }
-
-        .form-row {
-            display: flex;
-            gap: 1rem;
-            align-items: flex-end;
-            flex-wrap: wrap;
-            /* responsive */
-        }
-
-        .form-row .form-group {
-            flex: 1;
-            min-width: 200px;
-            margin-bottom: 0;
-        }
-    </style>
 </head>
 
 <body>
@@ -84,107 +27,359 @@
         </div>
     </nav>
 
+    <!-- Dashboard Content -->
     <div class="dashboard-container">
-        <!-- Left Column: Profile Info -->
-        <div class="left-col">
-            <div class="card">
-                <h3>My Profile</h3>
-                <div style="text-align: center; margin-bottom: 1.5rem;">
-                    <div
-                        style="width: 80px; height: 80px; background: var(--primary-gradient); border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; color: white;">
-                        <span id="avatar-initial">U</span>
-                    </div>
+
+        <!-- SKELETON LOADER (Initially Visible) -->
+        <div id="skeleton-loader"
+            style="grid-column: 1 / -1; display: grid; grid-template-columns: 320px 1fr; gap: 2rem;">
+            <div class="left-col">
+                <div class="card" style="height: 400px; background: #f0f0f0; animation: pulse 1.5s infinite;"></div>
+            </div>
+            <div class="right-col">
+                <div class="card"
+                    style="height: 150px; background: #f0f0f0; animation: pulse 1.5s infinite; margin-bottom: 2rem;">
                 </div>
-                <p><strong style="color: var(--text-muted);">Name</strong><br> <span id="profile-name">Loading...</span>
-                </p>
-                <div style="height: 1rem;"></div>
-                <p><strong style="color: var(--text-muted);">Email</strong><br> <span id="profile-email">...</span></p>
-                <div style="height: 1rem;"></div>
-                <p><strong style="color: var(--text-muted);">Role</strong><br> Candidate</p>
-                <hr style="border-color: var(--glass-border); margin: 1.5rem 0;">
-                <p><strong style="color: var(--text-muted);">Location</strong><br> <span
-                        id="profile-location">...</span></p>
-                <div style="height: 1rem;"></div>
-                <p><strong style="color: var(--text-muted);">Experience</strong><br> <span
-                        id="profile-experience">...</span> Years</p>
+                <div class="card" style="height: 300px; background: #f0f0f0; animation: pulse 1.5s infinite;"></div>
             </div>
         </div>
 
-        <!-- Right Column: Skills & content -->
-        <div class="right-col">
-            <!-- Add Skill Section - High Z-Index for Dropdown Overflow -->
-            <div class="card" style="position: relative; z-index: 50;">
-                <h3>Manage Skills</h3>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem;">Search for a standard skill
-                    in our library or add a custom one.</p>
+        <!-- ACTUAL CONTENT (Hidden until loaded) -->
+        <div id="dashboard-content" style="display: none; contents: inherit;">
+            <!-- Left Column: Profile Info -->
+            <div class="left-col">
 
-                <form onsubmit="addSkill(event)">
-                    <div class="form-row">
-                        <!-- Skill Search Dropdown -->
-                        <div class="form-group" style="flex: 2;">
-                            <label>Skill Name</label>
-                            <select id="skill-select" placeholder="Search skills...">
-                                <option value="">Type to search...</option>
-                            </select>
+                <!-- Profile Completion Widget -->
+                <div class="card" style="margin-bottom: 2rem; border-left: 5px solid var(--primary-color);">
+                    <h3>Profile Strength</h3>
+                    <div style="background: #e2e8f0; border-radius: 10px; height: 10px; margin: 1rem 0;">
+                        <div id="progress-bar"
+                            style="background: var(--primary-gradient); height: 100%; width: 0%; border-radius: 10px; transition: width 0.5s ease;">
                         </div>
-
-                        <!-- Proficiency -->
-                        <div class="form-group" style="flex: 1;">
-                            <label>Proficiency</label>
-                            <select id="proficiency">
-                                <option value="Beginner">Beginner</option>
-                                <option value="Intermediate">Intermediate</option>
-                                <option value="Advanced">Advanced</option>
-                            </select>
-                        </div>
-
-                        <!-- Years of Experience -->
-                        <div class="form-group" style="flex: 1;">
-                            <label>Exp (Years)</label>
-                            <input type="number" id="years_experience" min="0" max="50" step="0.1" value="0.5">
-                        </div>
-
-                        <button type="submit" class="btn"
-                            style="width: auto; padding: 0.75rem 2rem; margin-bottom: 2px;">Add</button>
                     </div>
-                </form>
-                <div id="skill-message" style="margin-top: 1rem; font-size: 0.9rem;"></div>
-            </div>
+                    <p id="progress-text" style="text-align: right; font-weight: bold; color: var(--primary-color);">0%
+                    </p>
 
-            <!-- Skills List -->
-            <div class="card">
-                <h3>My Skills</h3>
-                <div id="skills-list" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                    <p style="color: var(--text-muted);">Loading skills...</p>
+                    <div id="missing-sections" style="margin-top: 1rem; font-size: 0.9rem; color: #dc2626;">
+                        <!-- JS will populate missing items here -->
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3>My Profile</h3>
+                        <button onclick="openEditProfileModal()" class="btn"
+                            style="width: auto; padding: 0.25rem 0.75rem; font-size: 0.8rem;">Edit</button>
+                    </div>
+
+                    <div style="text-align: center; margin-bottom: 1.5rem;">
+                        <div
+                            style="width: 80px; height: 80px; background: var(--primary-gradient); border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; color: white;">
+                            <span id="avatar-initial">U</span>
+                        </div>
+                    </div>
+                    <p><strong style="color: var(--text-muted);">Name</strong><br> <span id="profile-name">...</span>
+                    </p>
+                    <div style="height: 0.5rem;"></div>
+                    <p><strong style="color: var(--text-muted);">Headline</strong><br> <span
+                            id="profile-headline">...</span></p>
+                    <div style="height: 0.5rem;"></div>
+                    <p><strong style="color: var(--text-muted);">Email</strong><br> <span id="profile-email">...</span>
+                    </p>
+                    <div style="height: 0.5rem;"></div>
+                    <p><strong style="color: var(--text-muted);">Location</strong><br> <span
+                            id="profile-location">...</span></p>
+                    <div style="height: 0.5rem;"></div>
+                    <p><strong style="color: var(--text-muted);">Contact</strong><br> <span
+                            id="profile-contact">...</span></p>
+                    <div style="height: 0.5rem;"></div>
+                    <p><strong style="color: var(--text-muted);">Experience</strong><br> <span
+                            id="profile-experience">...</span> Years</p>
+
+                    <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                        <!-- Social Links -->
+                        <a id="link-linkedin" href="#" target="_blank" style="display: none;">LinkedIn</a>
+                        <a id="link-github" href="#" target="_blank" style="display: none;">GitHub</a>
+                        <a id="link-portfolio" href="#" target="_blank" style="display: none;">Portfolio</a>
+                    </div>
                 </div>
             </div>
 
-            <!-- Enrollments -->
-            <div class="card">
-                <h3>Course Enrollments</h3>
-                <div id="enrollments-list">
-                    <p style="color: var(--text-muted);">No active enrollments.</p>
+            <!-- Right Column: Skills & content -->
+            <div class="right-col">
+
+                <!-- Experience Section -->
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3>Experience</h3>
+                        <button onclick="openAddExperienceModal()" class="btn"
+                            style="width: auto; padding: 0.25rem 0.75rem;">+ Add</button>
+                    </div>
+                    <div id="experience-list">
+                        <p style="color: var(--text-muted);">No experience added.</p>
+                    </div>
+                </div>
+
+                <!-- Education Section -->
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3>Education</h3>
+                        <button onclick="openAddEducationModal()" class="btn"
+                            style="width: auto; padding: 0.25rem 0.75rem;">+ Add</button>
+                    </div>
+                    <div id="education-list">
+                        <p style="color: var(--text-muted);">No education added.</p>
+                    </div>
+                </div>
+
+                <!-- Projects Section -->
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3>Projects</h3>
+                        <button onclick="openAddProjectModal()" class="btn"
+                            style="width: auto; padding: 0.25rem 0.75rem;">+ Add</button>
+                    </div>
+                    <div id="project-list">
+                        <p style="color: var(--text-muted);">No projects added.</p>
+                    </div>
+                </div>
+
+                <!-- Skills Section -->
+                <div class="card">
+                    <h3>Skills</h3>
+                    <div id="skills-list" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
+                        <p style="color: var(--text-muted);">Loading skills...</p>
+                    </div>
+
+                    <button onclick="toggleSkillForm()" class="btn"
+                        style="width: auto; font-size: 0.8rem; background: transparent; border: 1px solid var(--primary-color); color: var(--primary-color);">+
+                        Add Skill</button>
+
+                    <div id="skill-form-container"
+                        style="display: none; margin-top: 1rem; border-top: 1px solid #eee; padding-top: 1rem;">
+                        <form onsubmit="addSkill(event)">
+                            <div class="form-row">
+                                <div class="form-group" style="flex: 2;">
+                                    <select id="skill-select" placeholder="Search skills..."></select>
+                                </div>
+                                <div class="form-group" style="flex: 1;">
+                                    <select id="proficiency">
+                                        <option value="Beginner">Beginner</option>
+                                        <option value="Intermediate">Intermediate</option>
+                                        <option value="Advanced">Advanced</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="flex: 1;">
+                                    <input type="number" id="years_experience" min="0" max="50" step="0.1" value="1"
+                                        placeholder="Years">
+                                </div>
+                                <button type="submit" class="btn" style="width: auto;">Save</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Enrollments -->
+                <div class="card">
+                    <h3>Course Enrollments</h3>
+                    <div id="enrollments-list">
+                        <p style="color: var(--text-muted);">No active enrollments.</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- ========================================== -->
+    <!-- MODALS -->
+    <!-- ========================================== -->
+
+    <!-- Edit Profile Modal -->
+    <div id="modal-profile" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Profile</h3>
+                <span class="close-modal" onclick="closeModal('modal-profile')">&times;</span>
+            </div>
+            <form onsubmit="saveProfileDetails(event)">
+                <div class="form-group">
+                    <label>Headline</label>
+                    <input type="text" id="edit-headline" placeholder="e.g. Software Engineer at Tech Corp">
+                </div>
+                <!-- Extra fields -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>City</label>
+                        <input type="text" id="edit-city">
+                    </div>
+                    <div class="form-group">
+                        <label>Country</label>
+                        <input type="text" id="edit-country">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Contact Number</label>
+                    <input type="text" id="edit-contact">
+                </div>
+                <div class="form-group">
+                    <label>Years of Experience</label>
+                    <input type="number" id="edit-exp-years" step="0.1">
+                </div>
+
+                <div class="form-group">
+                    <label>Summary</label>
+                    <textarea id="edit-summary" rows="3"></textarea>
+                </div>
+
+                <h4>Links</h4>
+                <div class="form-group">
+                    <input type="text" id="edit-linkedin" placeholder="LinkedIn URL">
+                </div>
+                <div class="form-group">
+                    <input type="text" id="edit-github" placeholder="GitHub URL">
+                </div>
+                <div class="form-group">
+                    <input type="text" id="edit-portfolio" placeholder="Portfolio URL">
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('modal-profile')">Cancel</button>
+                    <button type="submit" class="btn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Experience Modal -->
+    <div id="modal-experience" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="exp-modal-title">Add Experience</h3>
+                <span class="close-modal" onclick="closeModal('modal-experience')">&times;</span>
+            </div>
+            <form onsubmit="saveExperience(event)">
+                <input type="hidden" id="exp-id">
+                <div class="form-group">
+                    <label>Job Title</label>
+                    <input type="text" id="exp-title" required>
+                </div>
+                <div class="form-group">
+                    <label>Company</label>
+                    <input type="text" id="exp-company" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Start Date</label>
+                        <input type="date" id="exp-start" required>
+                    </div>
+                    <div class="form-group">
+                        <label>End Date</label>
+                        <input type="date" id="exp-end">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="exp-current"> I currently work here
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="exp-desc" rows="3"></textarea>
+                </div>
+                <div class="modal-actions" style="justify-content: space-between;">
+                    <button type="button" id="btn-delete-exp" class="btn btn-danger hidden"
+                        onclick="deleteExperience()">Delete</button>
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="button" class="btn btn-secondary"
+                            onclick="closeModal('modal-experience')">Cancel</button>
+                        <button type="submit" class="btn">Save</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Education Modal -->
+    <div id="modal-education" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="edu-modal-title">Add Education</h3>
+                <span class="close-modal" onclick="closeModal('modal-education')">&times;</span>
+            </div>
+            <form onsubmit="saveEducation(event)">
+                <input type="hidden" id="edu-id">
+                <div class="form-group">
+                    <label>Institution</label>
+                    <input type="text" id="edu-school" required>
+                </div>
+                <div class="form-group">
+                    <label>Degree</label>
+                    <input type="text" id="edu-degree" required>
+                </div>
+                <div class="form-group">
+                    <label>Field of Study</label>
+                    <input type="text" id="edu-field">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Start Date</label>
+                        <input type="date" id="edu-start">
+                    </div>
+                    <div class="form-group">
+                        <label>End Date</label>
+                        <input type="date" id="edu-end">
+                    </div>
+                </div>
+                <div class="modal-actions" style="justify-content: space-between;">
+                    <button type="button" id="btn-delete-edu" class="btn btn-danger hidden"
+                        onclick="deleteEducation()">Delete</button>
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="button" class="btn btn-secondary"
+                            onclick="closeModal('modal-education')">Cancel</button>
+                        <button type="submit" class="btn">Save</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Project Modal -->
+    <div id="modal-project" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="proj-modal-title">Add Project</h3>
+                <span class="close-modal" onclick="closeModal('modal-project')">&times;</span>
+            </div>
+            <form onsubmit="saveProject(event)">
+                <input type="hidden" id="proj-id">
+                <div class="form-group">
+                    <label>Project Title</label>
+                    <input type="text" id="proj-title" required>
+                </div>
+                <div class="form-group">
+                    <label>Project URL</label>
+                    <input type="text" id="proj-url">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="proj-desc" rows="3"></textarea>
+                </div>
+                <div class="modal-actions" style="justify-content: space-between;">
+                    <button type="button" id="btn-delete-proj" class="btn btn-danger hidden"
+                        onclick="deleteProject()">Delete</button>
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="button" class="btn btn-secondary"
+                            onclick="closeModal('modal-project')">Cancel</button>
+                        <button type="submit" class="btn">Save</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="js/auth.js"></script>
     <script src="js/candidate.js"></script>
-    <script>
-        // Init
-        document.addEventListener('DOMContentLoaded', () => {
-            checkAuth();
-            loadProfile();
-            // Fallback avatar logic
-            setTimeout(() => {
-                const name = document.getElementById('profile-name').textContent;
-                if (name && name !== 'Loading...') {
-                    document.getElementById('avatar-initial').textContent = name.charAt(0);
-                }
-            }, 1000);
-        });
-    </script>
 </body>
 
 </html>

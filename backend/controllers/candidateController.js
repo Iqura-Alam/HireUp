@@ -28,8 +28,12 @@ exports.listSkills = async (req, res) => {
 };
 
 exports.addSkill = async (req, res) => {
-    const { skill_id, proficiency, years_experience, custom_name } = req.body;
+    const { skill_name, proficiency, years_experience, custom_name } = req.body;
     const candidateId = req.user.id;
+
+    if (!skill_name) {
+        return res.status(400).json({ message: 'Skill name is required' });
+    }
 
     if (proficiency === undefined) {
         return res.status(400).json({ message: 'Proficiency is required' });
@@ -43,7 +47,7 @@ exports.addSkill = async (req, res) => {
     try {
         await pool.query(
             'CALL sp_add_candidate_skill($1, $2, $3, $4, $5)',
-            [candidateId, skill_id || 0, proficiency, years_experience || 0, custom_name || null]
+            [candidateId, skill_name, proficiency, years_experience || 0, custom_name || null]
         );
         res.status(200).json({ message: 'Skill added successfully' });
     } catch (error) {
@@ -133,6 +137,190 @@ exports.getJobDetails = async (req, res) => {
             return res.status(404).json({ message: 'Job not found' });
         }
         res.json(result.rows[0]);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+
+// ==========================================
+// NEW: Profile Management Endpoints
+// ==========================================
+
+// Optimized Dashboard Context
+exports.getDashboardContext = async (req, res) => {
+    try {
+        const candidateId = req.user.id;
+
+        // 1. Get Full Profile (Reuse existing View)
+        const profileQuery = await pool.query('SELECT * FROM vw_candidate_full_profile WHERE user_id = $1', [candidateId]);
+        const profile = profileQuery.rows[0];
+
+        if (!profile) {
+            return res.status(404).json({ message: 'Profile not found' });
+        }
+
+        // 2. Fetch specialized lists (Experience, Education, Projects) 
+        // Note: Creating simple views for these or querying tables directly would be faster 
+        // but for now, we query tables directly as they are standardized.
+        const expQuery = await pool.query('SELECT * FROM candidate_experience WHERE candidate_id = $1 ORDER BY start_date DESC', [candidateId]);
+        const eduQuery = await pool.query('SELECT * FROM candidate_education WHERE candidate_id = $1 ORDER BY start_date DESC', [candidateId]);
+        const projQuery = await pool.query('SELECT * FROM candidate_project WHERE candidate_id = $1 ORDER BY start_date DESC', [candidateId]);
+
+        // 3. Get Completion Percentage
+        const statusQuery = await pool.query('SELECT completion_percentage FROM candidate_profile WHERE candidate_id = $1', [candidateId]);
+        const completion = statusQuery.rows[0] ? statusQuery.rows[0].completion_percentage : 0;
+
+        // 4. Calculate Missing Sections logic (Dynamic suggestion)
+        let missing = [];
+        if (!profile.headline) missing.push('Headline');
+        if (!profile.city) missing.push('Location');
+        if (expQuery.rows.length === 0) missing.push('Experience');
+        if (eduQuery.rows.length === 0) missing.push('Education');
+        if (projQuery.rows.length === 0) missing.push('Projects');
+        if (!profile.skills || profile.skills.length < 3) missing.push('Skills (min 3)');
+
+        const responseData = {
+            profile: {
+                ...profile,
+                completion_percentage: completion
+            },
+            sections: {
+                experience: expQuery.rows,
+                education: eduQuery.rows,
+                projects: projQuery.rows
+            },
+            missing_sections: missing
+        };
+
+        console.log('Sending Dashboard context:', candidateId);
+        res.json(responseData);
+
+    } catch (error) {
+        console.error('Dashboard Context Error:', error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+exports.updateProfileDetails = async (req, res) => {
+    const { headline, summary, city, division, country, contact_number, experience_years, linkedin_url, github_url, portfolio_url } = req.body;
+    const candidateId = req.user.id;
+
+    // Sanitize numeric fields: PostgreSQL INT doesn't like empty strings
+    const sanitizedExpYears = (experience_years === '' || experience_years === undefined) ? null : experience_years;
+
+    try {
+        await pool.query(
+            'CALL sp_update_candidate_profile($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)',
+            [candidateId, headline, summary, city, division, country, contact_number, sanitizedExpYears, linkedin_url, github_url, portfolio_url]
+        );
+        res.json({ message: 'Profile updated successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// Experience
+exports.manageExperience = async (req, res) => {
+    const { experience_id, company_name, title, start_date, end_date, description, is_current } = req.body;
+    const candidateId = req.user.id;
+    const op = experience_id ? 'UPDATE' : 'INSERT';
+
+    // Sanitize Dates and IDs - PostgreSQL hates empty strings for these types
+    const sanitizedId = (experience_id === '' || experience_id === undefined) ? null : experience_id;
+    const sanitizedStart = (start_date === '' || start_date === undefined) ? null : start_date;
+    const sanitizedEnd = (end_date === '' || end_date === undefined) ? null : end_date;
+
+    try {
+        await pool.query(
+            'CALL sp_manage_candidate_experience($1, $2, $3, $4, $5, $6, $7, $8, $9)',
+            [op, candidateId, sanitizedId, company_name, title, sanitizedStart, sanitizedEnd, description, is_current]
+        );
+        res.json({ message: 'Experience saved' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+exports.deleteExperience = async (req, res) => {
+    const { id } = req.params;
+    const candidateId = req.user.id;
+    try {
+        await pool.query('CALL sp_manage_candidate_experience($1, $2, $3)', ['DELETE', candidateId, id]);
+        res.json({ message: 'Experience deleted' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// Education
+exports.manageEducation = async (req, res) => {
+    const { education_id, institution, degree, field_of_study, start_date, end_date, description } = req.body;
+    const candidateId = req.user.id;
+    const op = education_id ? 'UPDATE' : 'INSERT';
+
+    // Sanitize Dates and IDs
+    const sanitizedId = (education_id === '' || education_id === undefined) ? null : education_id;
+    const sanitizedStart = (start_date === '' || start_date === undefined) ? null : start_date;
+    const sanitizedEnd = (end_date === '' || end_date === undefined) ? null : end_date;
+
+    try {
+        await pool.query(
+            'CALL sp_manage_candidate_education($1, $2, $3, $4, $5, $6, $7, $8, $9)',
+            [op, candidateId, sanitizedId, institution, degree, field_of_study, sanitizedStart, sanitizedEnd, description]
+        );
+        res.json({ message: 'Education saved' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+exports.deleteEducation = async (req, res) => {
+    const { id } = req.params;
+    const candidateId = req.user.id;
+    try {
+        await pool.query('CALL sp_manage_candidate_education($1, $2, $3)', ['DELETE', candidateId, id]);
+        res.json({ message: 'Education deleted' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// Projects
+exports.manageProject = async (req, res) => {
+    const { project_id, title, description, project_url, start_date, end_date } = req.body;
+    const candidateId = req.user.id;
+    const op = project_id ? 'UPDATE' : 'INSERT';
+
+    // Sanitize Dates and IDs
+    const sanitizedId = (project_id === '' || project_id === undefined) ? null : project_id;
+    const sanitizedStart = (start_date === '' || start_date === undefined) ? null : start_date;
+    const sanitizedEnd = (end_date === '' || end_date === undefined) ? null : end_date;
+
+    try {
+        await pool.query(
+            'CALL sp_manage_candidate_project($1, $2, $3, $4, $5, $6, $7, $8)',
+            [op, candidateId, sanitizedId, title, description, project_url, sanitizedStart, sanitizedEnd]
+        );
+        res.json({ message: 'Project saved' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+exports.deleteProject = async (req, res) => {
+    const { id } = req.params;
+    const candidateId = req.user.id;
+    try {
+        await pool.query('CALL sp_manage_candidate_project($1, $2, $3)', ['DELETE', candidateId, id]);
+        res.json({ message: 'Project deleted' });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server Error' });

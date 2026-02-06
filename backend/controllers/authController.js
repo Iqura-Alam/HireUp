@@ -3,17 +3,17 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 exports.register = async (req, res) => {
-    const { 
-        username, email, password, user_role, 
-        first_name, last_name, full_name, 
-        city, division, country, location, 
-        experience_years 
+    const {
+        username, email, password, user_role,
+        first_name, last_name, full_name,
+        city, division, country, location,
+        experience_years
     } = req.body;
 
     try {
         //Validation
         if (!username || !email || !password) {
-             return res.status(400).json({ message: 'Please fill all required fields' });
+            return res.status(400).json({ message: 'Please fill all required fields' });
         }
 
         // Hash password
@@ -29,18 +29,21 @@ exports.register = async (req, res) => {
                 lName = parts.slice(1).join(' ') || '';
             }
             if (!fName || !lName) {
-                 return res.status(400).json({ message: 'First Name and Last Name are required' });
+                return res.status(400).json({ message: 'First Name and Last Name are required' });
             }
 
-            // Handle Address
-            const p_city = city || location || 'Unknown'; 
-            const p_division = division || 'Unknown';
-            const p_country = country || 'Bangladesh';
+            // Handle Address (Allow Nulls for Quick Signup)
+            const p_city = city || null;
+            const p_division = division || null;
+            const p_country = country || null;
+            // Default 0 for int if not provided, or null if procedure allows. Procedure defaults to NULL but JS passes explicit value. 
+            // Let's pass null for experience if undefined
+            const p_exp = experience_years !== undefined && experience_years !== '' ? experience_years : null;
 
             // Call Stored Procedure: sp_register_candidate
             await pool.query(
                 `CALL sp_register_candidate($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-                [username, email, passwordHash, fName, lName, p_city, p_division, p_country, experience_years || 0]
+                [username, email, passwordHash, fName, lName, p_city, p_division, p_country, p_exp]
             );
         } else if (user_role === 'Employer') {
             // Validate Employer Fields
@@ -66,7 +69,33 @@ exports.register = async (req, res) => {
             return res.status(400).json({ message: 'Invalid Role' });
         }
 
-        res.status(201).json({ message: 'User registered successfully' });
+        // AUTO-LOGIN Logic
+        // Fetch the user we just created to get their ID
+        const userResult = await pool.query('SELECT user_id, username, role FROM users WHERE email = $1', [email]);
+        const user = userResult.rows[0];
+
+        // Create JWT Token
+        const payload = {
+            user: {
+                id: user.user_id,
+                role: user.role
+            }
+        };
+
+        jwt.sign(
+            payload,
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' },
+            (err, token) => {
+                if (err) throw err;
+                res.status(201).json({
+                    message: 'Registered and logged in',
+                    token,
+                    user: { id: user.user_id, username: user.username, role: user.role }
+                });
+            }
+        );
+
     } catch (error) {
         console.error(error);
         if (error.code === '23505') { // Unique violation
