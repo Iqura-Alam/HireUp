@@ -143,6 +143,95 @@ CREATE TRIGGER trg_candidate_skill_set_updated_at
 BEFORE UPDATE ON candidate_skill
 FOR EACH ROW EXECUTE FUNCTION fn_set_updated_at();
 
+---------------------------------------------------------
+-- PROFILE COMPLETION LOGIC
+---------------------------------------------------------
+CREATE OR REPLACE FUNCTION fn_calculate_completion()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_cand_id BIGINT;
+    v_score INT := 0;
+    v_has_exp BOOLEAN;
+    v_has_edu BOOLEAN;
+    v_has_proj BOOLEAN;
+    v_skill_count INT;
+    v_profile RECORD;
+BEGIN
+    -- Determine Candidate ID depending on table
+    IF TG_TABLE_NAME = 'candidate_profile' THEN
+        v_cand_id := NEW.candidate_id;
+    ELSIF TG_TABLE_NAME = 'candidate_skill' THEN
+        v_cand_id := NEW.candidate_id;
+        IF TG_OP = 'DELETE' THEN v_cand_id := OLD.candidate_id; END IF;
+    ELSE
+        -- experience, education, project
+        v_cand_id := NEW.candidate_id;
+        IF TG_OP = 'DELETE' THEN v_cand_id := OLD.candidate_id; END IF;
+    END IF;
+
+    -- 1. Check Profile Basics (40%)
+    SELECT * INTO v_profile FROM candidate_profile WHERE candidate_id = v_cand_id;
+    
+    IF v_profile.headline IS NOT NULL AND length(v_profile.headline) > 0 THEN v_score := v_score + 10; END IF;
+    IF v_profile.summary IS NOT NULL AND length(v_profile.summary) > 0 THEN v_score := v_score + 10; END IF;
+    IF v_profile.city IS NOT NULL AND v_profile.country IS NOT NULL THEN v_score := v_score + 10; END IF;
+    IF v_profile.contact_number IS NOT NULL THEN v_score := v_score + 10; END IF;
+
+    -- 2. Check Skills (20%)
+    SELECT COUNT(*) INTO v_skill_count FROM candidate_skill WHERE candidate_id = v_cand_id;
+    IF v_skill_count >= 5 THEN 
+        v_score := v_score + 20; 
+    ELSIF v_skill_count > 0 THEN
+        v_score := v_score + (v_skill_count * 4);
+    END IF;
+
+    -- 3. Check Experience (20%)
+    SELECT EXISTS(SELECT 1 FROM candidate_experience WHERE candidate_id = v_cand_id) INTO v_has_exp;
+    IF v_has_exp THEN v_score := v_score + 20; END IF;
+
+    -- 4. Check Education (10%)
+    SELECT EXISTS(SELECT 1 FROM candidate_education WHERE candidate_id = v_cand_id) INTO v_has_edu;
+    IF v_has_edu THEN v_score := v_score + 10; END IF;
+
+    -- 5. Check Projects (10%)
+    SELECT EXISTS(SELECT 1 FROM candidate_project WHERE candidate_id = v_cand_id) INTO v_has_proj;
+    IF v_has_proj THEN v_score := v_score + 10; END IF;
+
+    -- Update Table - Avoid recursion by checking value
+    UPDATE candidate_profile 
+    SET completion_percentage = v_score
+    WHERE candidate_id = v_cand_id AND completion_percentage IS DISTINCT FROM v_score;
+
+    RETURN NULL; -- AFTER trigger
+END;
+$$ LANGUAGE plpgsql;
+
+-- Triggers for Recalculation
+DROP TRIGGER IF EXISTS trg_profile_score_meta ON candidate_profile;
+CREATE TRIGGER trg_profile_score_meta
+AFTER UPDATE OF headline, summary, city, country, contact_number ON candidate_profile
+FOR EACH ROW EXECUTE FUNCTION fn_calculate_completion();
+
+DROP TRIGGER IF EXISTS trg_profile_score_exp ON candidate_experience;
+CREATE TRIGGER trg_profile_score_exp
+AFTER INSERT OR UPDATE OR DELETE ON candidate_experience
+FOR EACH ROW EXECUTE FUNCTION fn_calculate_completion();
+
+DROP TRIGGER IF EXISTS trg_profile_score_edu ON candidate_education;
+CREATE TRIGGER trg_profile_score_edu
+AFTER INSERT OR UPDATE OR DELETE ON candidate_education
+FOR EACH ROW EXECUTE FUNCTION fn_calculate_completion();
+
+DROP TRIGGER IF EXISTS trg_profile_score_proj ON candidate_project;
+CREATE TRIGGER trg_profile_score_proj
+AFTER INSERT OR UPDATE OR DELETE ON candidate_project
+FOR EACH ROW EXECUTE FUNCTION fn_calculate_completion();
+
+DROP TRIGGER IF EXISTS trg_profile_score_skill ON candidate_skill;
+CREATE TRIGGER trg_profile_score_skill
+AFTER INSERT OR UPDATE OR DELETE ON candidate_skill
+FOR EACH ROW EXECUTE FUNCTION fn_calculate_completion();
+
 -- AUDIT LOG TRIGGER
 CREATE OR REPLACE FUNCTION fn_audit_application_insert()
 RETURNS TRIGGER AS $$

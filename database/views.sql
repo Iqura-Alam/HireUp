@@ -1,7 +1,6 @@
-BEGIN;
-
 -- Active jobs: Open and not expired
 -- Includes requirements as JSON array built from job_requirement table
+DROP VIEW IF EXISTS vw_active_jobs CASCADE;
 CREATE OR REPLACE VIEW vw_active_jobs AS
 SELECT
   j.job_id,
@@ -37,6 +36,7 @@ GROUP BY
   j.job_id, e.employer_id;
 
 -- Employer dashboard: counts
+DROP VIEW IF EXISTS vw_employer_dashboard CASCADE;
 CREATE OR REPLACE VIEW vw_employer_dashboard AS
 SELECT
   e.employer_id,
@@ -58,6 +58,7 @@ LEFT JOIN application a ON a.job_id = j.job_id
 GROUP BY e.employer_id, e.company_name;
 
 -- Candidate Full Profile View
+DROP VIEW IF EXISTS vw_candidate_full_profile CASCADE;
 CREATE OR REPLACE VIEW vw_candidate_full_profile AS
 SELECT
   u.user_id,
@@ -70,6 +71,7 @@ SELECT
   c.country,
   c.experience_years,
   c.contact_number,
+  c.completion_percentage,
   
   -- Aggregated Skills
   COALESCE(
@@ -163,6 +165,4 @@ SELECT
 FROM course c
 LEFT JOIN enrollment e ON c.course_id = e.course_id
 GROUP BY c.trainer_id;
-
-COMMIT;
 
