@@ -92,7 +92,10 @@ CREATE TABLE IF NOT EXISTS candidate_profile (
   resume_url        VARCHAR(200),
   resume_updated_at TIMESTAMPTZ,
   
-  experience_years INT CHECK (experience_years >= 0), 
+  experience_years INT CHECK (experience_years >= 0),
+  
+  -- Profile Health
+  completion_percentage INT DEFAULT 0,
   
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),

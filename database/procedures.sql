@@ -119,10 +119,10 @@ CREATE OR REPLACE PROCEDURE sp_register_candidate(
   p_password_hash VARCHAR,
   p_first_name VARCHAR,
   p_last_name VARCHAR,
-  p_city VARCHAR,       
-  p_division VARCHAR,   
-  p_country VARCHAR,    
-  p_experience_years INT
+  p_city VARCHAR DEFAULT NULL,       
+  p_division VARCHAR DEFAULT NULL,   
+  p_country VARCHAR DEFAULT NULL,    
+  p_experience_years INT DEFAULT NULL
 )
 LANGUAGE plpgsql
 AS $$
@@ -156,6 +156,159 @@ BEGIN
 END;
 $$;
 
+---------------------------------------------------------
+-- PROFILE MANAGEMENT
+---------------------------------------------------------
+
+-- 1. Atomic Profile Update
+CREATE OR REPLACE PROCEDURE sp_update_candidate_profile(
+    p_candidate_id BIGINT,
+    p_headline VARCHAR DEFAULT NULL,
+    p_summary TEXT DEFAULT NULL,
+    p_city VARCHAR DEFAULT NULL,
+    p_division VARCHAR DEFAULT NULL,
+    p_country VARCHAR DEFAULT NULL,
+    p_contact_number VARCHAR DEFAULT NULL,
+    p_experience_years INT DEFAULT NULL,
+    p_linkedin_url VARCHAR DEFAULT NULL,
+    p_github_url VARCHAR DEFAULT NULL,
+    p_portfolio_url VARCHAR DEFAULT NULL
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    UPDATE candidate_profile
+    SET 
+        headline = COALESCE(p_headline, headline),
+        summary = COALESCE(p_summary, summary),
+        city = COALESCE(p_city, city),
+        division = COALESCE(p_division, division),
+        country = COALESCE(p_country, country),
+        contact_number = COALESCE(p_contact_number, contact_number),
+        experience_years = COALESCE(p_experience_years, experience_years),
+        linkedin_url = COALESCE(p_linkedin_url, linkedin_url),
+        github_url = COALESCE(p_github_url, github_url),
+        portfolio_url = COALESCE(p_portfolio_url, portfolio_url),
+        updated_at = now()
+    WHERE candidate_id = p_candidate_id;
+END;
+$$;
+
+-- 2. Manage Experience (Upsert/Delete)
+CREATE OR REPLACE PROCEDURE sp_manage_candidate_experience(
+    p_operation VARCHAR, -- 'INSERT', 'UPDATE', 'DELETE'
+    p_candidate_id BIGINT,
+    p_experience_id BIGINT DEFAULT NULL,
+    p_company_name VARCHAR DEFAULT NULL,
+    p_title VARCHAR DEFAULT NULL,
+    p_start_date DATE DEFAULT NULL,
+    p_end_date DATE DEFAULT NULL,
+    p_description TEXT DEFAULT NULL,
+    p_is_current BOOLEAN DEFAULT FALSE
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF p_operation = 'DELETE' THEN
+        DELETE FROM candidate_experience 
+        WHERE experience_id = p_experience_id AND candidate_id = p_candidate_id;
+    
+    ELSIF p_operation = 'INSERT' OR p_operation = 'UPDATE' THEN
+        INSERT INTO candidate_experience (
+            experience_id, candidate_id, company_name, title, start_date, end_date, description, is_current
+        )
+        VALUES (
+            COALESCE(p_experience_id, nextval('candidate_experience_experience_id_seq')),
+            p_candidate_id, p_company_name, p_title, p_start_date, p_end_date, p_description, p_is_current
+        )
+        ON CONFLICT (experience_id) DO UPDATE 
+        SET 
+            company_name = EXCLUDED.company_name,
+            title = EXCLUDED.title,
+            start_date = EXCLUDED.start_date,
+            end_date = EXCLUDED.end_date,
+            description = EXCLUDED.description,
+            is_current = EXCLUDED.is_current;
+    END IF;
+END;
+$$;
+
+-- 3. Manage Education (Upsert/Delete)
+CREATE OR REPLACE PROCEDURE sp_manage_candidate_education(
+    p_operation VARCHAR,
+    p_candidate_id BIGINT,
+    p_education_id BIGINT DEFAULT NULL,
+    p_institution VARCHAR DEFAULT NULL,
+    p_degree VARCHAR DEFAULT NULL,
+    p_field_of_study VARCHAR DEFAULT NULL,
+    p_start_date DATE DEFAULT NULL,
+    p_end_date DATE DEFAULT NULL,
+    p_description TEXT DEFAULT NULL
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF p_operation = 'DELETE' THEN
+        DELETE FROM candidate_education 
+        WHERE education_id = p_education_id AND candidate_id = p_candidate_id;
+    
+    ELSIF p_operation = 'INSERT' OR p_operation = 'UPDATE' THEN
+        INSERT INTO candidate_education (
+            education_id, candidate_id, institution, degree, field_of_study, start_date, end_date, description
+        )
+        VALUES (
+            COALESCE(p_education_id, nextval('candidate_education_education_id_seq')),
+            p_candidate_id, p_institution, p_degree, p_field_of_study, p_start_date, p_end_date, p_description
+        )
+        ON CONFLICT (education_id) DO UPDATE 
+        SET 
+            institution = EXCLUDED.institution,
+            degree = EXCLUDED.degree,
+            field_of_study = EXCLUDED.field_of_study,
+            start_date = EXCLUDED.start_date,
+            end_date = EXCLUDED.end_date,
+            description = EXCLUDED.description;
+    END IF;
+END;
+$$;
+
+-- 4. Manage Project (Upsert/Delete)
+CREATE OR REPLACE PROCEDURE sp_manage_candidate_project(
+    p_operation VARCHAR,
+    p_candidate_id BIGINT,
+    p_project_id BIGINT DEFAULT NULL,
+    p_title VARCHAR DEFAULT NULL,
+    p_description TEXT DEFAULT NULL,
+    p_project_url VARCHAR DEFAULT NULL,
+    p_start_date DATE DEFAULT NULL,
+    p_end_date DATE DEFAULT NULL
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF p_operation = 'DELETE' THEN
+        DELETE FROM candidate_project
+        WHERE project_id = p_project_id AND candidate_id = p_candidate_id;
+    
+    ELSIF p_operation = 'INSERT' OR p_operation = 'UPDATE' THEN
+        INSERT INTO candidate_project (
+            project_id, candidate_id, title, description, project_url, start_date, end_date
+        )
+        VALUES (
+            COALESCE(p_project_id, nextval('candidate_project_project_id_seq')),
+            p_candidate_id, p_title, p_description, p_project_url, p_start_date, p_end_date
+        )
+        ON CONFLICT (project_id) DO UPDATE 
+        SET 
+            title = EXCLUDED.title,
+            description = EXCLUDED.description,
+            project_url = EXCLUDED.project_url,
+            start_date = EXCLUDED.start_date,
+            end_date = EXCLUDED.end_date;
+    END IF;
+END;
+$$;
+
 -- Procedure to register a new employer
 CREATE OR REPLACE PROCEDURE sp_register_employer(
   p_username VARCHAR,
@@ -186,6 +339,64 @@ $$;
 -- Procedure to add or update a candidate skill
 CREATE OR REPLACE PROCEDURE sp_add_candidate_skill(
   p_candidate_id BIGINT,
+  p_skill_name VARCHAR,
+  p_proficiency skill_proficiency,
+  p_years_exp NUMERIC DEFAULT 0,
+  p_custom_name VARCHAR DEFAULT NULL
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_skill_id BIGINT;
+  v_slug VARCHAR;
+BEGIN
+  -- 1. Handle "Other" skill special case
+  IF p_skill_name = 'Other' THEN
+      v_skill_id := 0; 
+      IF p_custom_name IS NULL THEN
+         RAISE EXCEPTION 'Custom skill name required for "Other" skill';
+      END IF;
+  ELSE
+      -- Try to find by Exact Name
+      SELECT skill_id INTO v_skill_id 
+      FROM skill 
+      WHERE skill_name = p_skill_name 
+      LIMIT 1;
+
+      -- If not found, try by generated slug or create new
+      IF v_skill_id IS NULL THEN
+          -- Simple slug generation: lowercase, replace non-alphanumeric with dash
+          v_slug := lower(regexp_replace(trim(p_skill_name), '[^a-zA-Z0-9]+', '-', 'g'));
+          -- Remove leading/trailing dashes
+          v_slug := trim(both '-' from v_slug);
+
+          -- Check if slug exists (e.g. 'c-plus-plus' vs 'c')
+          SELECT skill_id INTO v_skill_id FROM skill WHERE skill_slug = v_slug;
+
+          -- If still not found, Create New
+          IF v_skill_id IS NULL THEN
+             INSERT INTO skill (skill_name, skill_slug, type)
+             VALUES (TRIM(p_skill_name), v_slug, 'Technical')
+             RETURNING skill_id INTO v_skill_id;
+          END IF;
+      END IF;
+  END IF;
+
+  -- 2. Upsert Candidate Skill
+  INSERT INTO candidate_skill (candidate_id, skill_id, proficiency_level, years_of_experience, custom_skill_name)
+  VALUES (p_candidate_id, v_skill_id, p_proficiency, p_years_exp, p_custom_name)
+  ON CONFLICT (candidate_id, skill_id) 
+  DO UPDATE SET 
+      proficiency_level = EXCLUDED.proficiency_level, 
+      years_of_experience = EXCLUDED.years_of_experience,
+      custom_skill_name = EXCLUDED.custom_skill_name,
+      updated_at = now();
+END;
+$$;
+
+-- Overload: Add skill by ID directly
+CREATE OR REPLACE PROCEDURE sp_add_candidate_skill(
+  p_candidate_id BIGINT,
   p_skill_id BIGINT,
   p_proficiency skill_proficiency,
   p_years_exp NUMERIC DEFAULT 0,
@@ -194,12 +405,6 @@ CREATE OR REPLACE PROCEDURE sp_add_candidate_skill(
 LANGUAGE plpgsql
 AS $$
 BEGIN
-  -- 1. Validation (Simple)
-  IF p_skill_id = 0 AND p_custom_name IS NULL THEN
-     RAISE EXCEPTION 'Custom skill name required for "Other" skill';
-  END IF;
-
-  -- 2. Upsert Candidate Skill
   INSERT INTO candidate_skill (candidate_id, skill_id, proficiency_level, years_of_experience, custom_skill_name)
   VALUES (p_candidate_id, p_skill_id, p_proficiency, p_years_exp, p_custom_name)
   ON CONFLICT (candidate_id, skill_id) 

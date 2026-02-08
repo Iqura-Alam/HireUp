@@ -18,10 +18,10 @@ async function register(event) {
     if (role === 'Candidate') {
         payload.first_name = document.getElementById('first_name').value;
         payload.last_name = document.getElementById('last_name').value;
-        payload.city = document.getElementById('city').value;
-        payload.division = document.getElementById('division').value;
-        payload.country = document.getElementById('country').value;
-        payload.experience_years = document.getElementById('experience').value;
+        payload.city = document.getElementById('city') ? document.getElementById('city').value : null;
+        payload.division = document.getElementById('division') ? document.getElementById('division').value : null;
+        payload.country = document.getElementById('country') ? document.getElementById('country').value : null;
+        payload.experience_years = document.getElementById('experience') ? document.getElementById('experience').value : 0;
     } else if (role === 'Employer') {
         payload.company_name = document.getElementById('company_name').value;
         payload.industry = document.getElementById('industry').value;
@@ -50,8 +50,21 @@ async function register(event) {
         const data = await response.json();
 
         if (response.ok) {
-            alert('Registration successful! Please login.');
-            window.location.href = 'login.html';
+            if (data.token) {
+                // Auto Login
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+
+                // Redirect based on role
+                const role = data.user.role;
+                if (role === 'Employer') window.location.href = 'employer_dashboard.html';
+                else if (role === 'Trainer') window.location.href = 'trainer_dashboard.html';
+                else if (role === 'Admin') window.location.href = 'admin_dashboard.html';
+                else window.location.href = 'candidate_dashboard.html';
+            } else {
+                alert('Registration successful! Please login.');
+                window.location.href = 'login.html';
+            }
         } else {
             errorDiv.textContent = data.message || 'Registration failed';
         }

@@ -18,6 +18,19 @@ router.get('/list', auth, candidateController.listSkills);
 // @access  Private
 router.post('/skill', auth, candidateController.addSkill);
 
+// Dashboard & Profile Management
+router.get('/dashboard-context', auth, candidateController.getDashboardContext);
+router.put('/profile-details', auth, candidateController.updateProfileDetails);
+
+router.post('/experience', auth, candidateController.manageExperience);
+router.delete('/experience/:id', auth, candidateController.deleteExperience);
+
+router.post('/education', auth, candidateController.manageEducation);
+router.delete('/education/:id', auth, candidateController.deleteEducation);
+
+router.post('/project', auth, candidateController.manageProject);
+router.delete('/project/:id', auth, candidateController.deleteProject);
+
 const multer = require('multer');
 const path = require('path');
 
