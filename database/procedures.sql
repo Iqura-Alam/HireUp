@@ -394,6 +394,28 @@ BEGIN
 END;
 $$;
 
+-- Overload: Add skill by ID directly
+CREATE OR REPLACE PROCEDURE sp_add_candidate_skill(
+  p_candidate_id BIGINT,
+  p_skill_id BIGINT,
+  p_proficiency skill_proficiency,
+  p_years_exp NUMERIC DEFAULT 0,
+  p_custom_name VARCHAR DEFAULT NULL
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  INSERT INTO candidate_skill (candidate_id, skill_id, proficiency_level, years_of_experience, custom_skill_name)
+  VALUES (p_candidate_id, p_skill_id, p_proficiency, p_years_exp, p_custom_name)
+  ON CONFLICT (candidate_id, skill_id) 
+  DO UPDATE SET 
+      proficiency_level = EXCLUDED.proficiency_level, 
+      years_of_experience = EXCLUDED.years_of_experience,
+      custom_skill_name = EXCLUDED.custom_skill_name,
+      updated_at = now();
+END;
+$$;
+
 
 -- trainer and admin procedures created
 
