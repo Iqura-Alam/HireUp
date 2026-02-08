@@ -42,4 +42,8 @@ router.get('/jobs', auth, candidateController.getAllJobs);
 router.get('/jobs/:jobId', auth, candidateController.getJobDetails);
 router.post('/jobs/:jobId/apply', [auth, upload.single('cv')], candidateController.applyForJob);
 
+router.get('/courses', auth, candidateController.getAllCourses);
+router.post('/courses/:courseId/enroll', auth, candidateController.enrollInCourse);
+
 module.exports = router;
+

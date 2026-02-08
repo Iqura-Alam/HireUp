@@ -275,7 +275,7 @@ CREATE TABLE IF NOT EXISTS application_answer (
 );
 
 
--- trainer and course tabel created
+-- trainer and course table created
 
 CREATE TABLE IF NOT EXISTS trainer_profile (
   trainer_id      BIGSERIAL PRIMARY KEY,
@@ -312,9 +312,12 @@ CREATE TABLE IF NOT EXISTS enrollment (
   candidate_id    BIGINT NOT NULL REFERENCES candidate_profile(candidate_id) ON DELETE CASCADE,
   course_id       BIGINT NOT NULL REFERENCES course(course_id) ON DELETE CASCADE,
   enrolled_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  status           application_status NOT NULL DEFAULT 'Applied',
   completion_status VARCHAR(50) NOT NULL DEFAULT 'In Progress' CHECK (completion_status IN ('In Progress', 'Completed')),
   CONSTRAINT uq_student_course UNIQUE (candidate_id, course_id)
 );
+
+
 
 COMMIT;
 
