@@ -206,6 +206,7 @@ async function viewApplications(jobId) {
             list.innerHTML = '<p>No applications yet.</p>';
         } else {
             apps.forEach(app => {
+                console.log('App Data:', app); // DEBUG
                 const div = document.createElement('div');
                 div.className = 'applicant-item';
 
@@ -243,7 +244,10 @@ async function viewApplications(jobId) {
                         <strong>${app.full_name}</strong> (${app.email})<br>
                         <small>Exp: ${app.experience_years} Years</small><br>
                         <small>Applied: ${new Date(app.applied_at).toLocaleDateString()}</small><br>
-                        <a href="javascript:void(0)" onclick="downloadCV(${app.application_id})" style="color: var(--primary-color); font-size: 0.9rem; text-decoration: underline;">Download CV</a>
+                        <div style="margin-top: 0.5rem; display: flex; gap: 1rem;">
+                            <a href="profile.html?type=candidate&id=${app.candidate_id}" target="_blank" style="color: var(--primary-color); font-size: 0.9rem; text-decoration: underline;">View Profile</a>
+                            <a href="javascript:void(0)" onclick="downloadCV(${app.application_id})" style="color: var(--primary-color); font-size: 0.9rem; text-decoration: underline;">Download CV</a>
+                        </div>
                         ${answersHtml}
                     </div>
                     <div>

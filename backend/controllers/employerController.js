@@ -99,7 +99,7 @@ exports.getJobApplications = async (req, res) => {
         const result = await pool.query(`
             SELECT a.application_id, a.status, a.applied_at,
                    u.email, u.username,
-                   cp.first_name, cp.last_name, cp.full_name, cp.resume_url, cp.experience_years,
+                   cp.candidate_id, cp.first_name, cp.last_name, cp.full_name, cp.resume_url, cp.experience_years,
                    (
                        SELECT jsonb_agg(
                            jsonb_build_object(
@@ -206,6 +206,33 @@ exports.getApplicationCV = async (req, res) => {
         res.setHeader('Content-Disposition', `attachment; filename="application_${applicationId}.pdf"`);
         res.send(cvBuffer);
 
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+exports.getPublicEmployerProfile = async (req, res) => {
+    try {
+        const { id } = req.params; // employer_id
+        console.log(`[getPublicEmployerProfile] Request for ID: ${id}`);
+
+        if (!id || isNaN(parseInt(id))) {
+            return res.status(400).json({ message: 'Invalid Employer ID' });
+        }
+
+        const result = await pool.query(`
+            SELECT e.company_name, e.industry, e.location, e.website, e.contact_number,
+            (SELECT COUNT(*) FROM job j WHERE j.employer_id = e.employer_id AND j.status = 'Open') as open_jobs
+            FROM employer e
+            WHERE e.employer_id = $1
+        `, [id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'Employer not found' });
+        }
+
+        res.json(result.rows[0]);
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server error' });

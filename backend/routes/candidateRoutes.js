@@ -8,6 +8,11 @@ const auth = require('../middleware/authMiddleware');
 // @access  Private
 router.get('/profile', auth, candidateController.getProfile);
 
+// @route   GET api/candidate/public/:id
+// @desc    Get public profile of a candidate by ID
+// @access  Private
+router.get('/public/:id', auth, candidateController.getPublicProfile);
+
 // @route   GET api/candidate/list
 // @desc    List all master skills for autocomplete
 // @access  Private
