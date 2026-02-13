@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HireUp - Profile View</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .profile-header {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 2rem;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: var(--primary-gradient);
+        }
+
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            background: var(--primary-gradient);
+            border-radius: 50%;
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: white;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 0.5rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .info-item label {
+            display: block;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .info-item span {
+            font-size: 1.1rem;
+        }
+
+        .timeline-item {
+            padding-left: 1rem;
+            border-left: 2px solid var(--primary-color);
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -6px;
+            top: 0;
+            width: 10px;
+            height: 10px;
+            background: var(--primary-color);
+            border-radius: 50%;
+        }
+
+        .tag {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: inline-block;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav
+        style="padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; background: rgba(30,30,46,0.9); backdrop-filter: blur(10px);">
+        <div>
+            <h2
+                style="margin: 0; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.8rem;">
+                HireUp</h2>
+        </div>
+        <div>
+            <button onclick="window.history.back()" class="btn"
+                style="background: transparent; border: 1px solid var(--text-muted); width: auto; padding: 0.5rem 1rem;">Back</button>
+        </div>
+    </nav>
+
+    <div class="container" id="profile-container">
+        <p style="text-align: center; color: var(--text-muted);">Loading profile...</p>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        const API_CANDIDATE = 'http://localhost:5000/api/candidate';
+        const API_EMPLOYER = 'http://localhost:5000/api/employer';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const type = urlParams.get('type'); // 'candidate' or 'employer'
+            const id = urlParams.get('id');
+
+            if (!type || !id) {
+                document.getElementById('profile-container').innerHTML = '<p style="text-align: center; color: red;">Invalid profile link.</p>';
+                return;
+            }
+
+            loadProfile(type, id);
+        });
+
+        async function loadProfile(type, id) {
+            try {
+                let url = '';
+                // Logic: 
+                // If viewing a CANDIDATE, we generally are an EMPLOYER (so use employer token/api wrapper? No, use the token we have)
+                // The endpoints are protected.
+                // Candidate Public API: /api/candidate/public/:id
+                // Employer Public API: /api/employer/public/:id
+
+                // However, we need to decide WHICH axios base to use based on WHO we are logged in as? 
+                // Actually, the endpoints allow any authenticated user usually. 
+                // Let's assume the token works for the respective route group if we are allowed.
+
+                // Wait, if I am a Candidate viewing an Employer, I should call a route accessible to me.
+                // Currently I put `getPublicEmployerProfile` in `employerRoutes` protected by `auth` which usually expects any valid token?
+                // Let's assume standard auth middleware accepts any valid user (Candidate or Employer).
+
+                if (type === 'candidate') {
+                    url = `${API_CANDIDATE}/public/${id}`;
+                } else {
+                    url = `${API_EMPLOYER}/public/${id}`;
+                }
+
+                const res = await fetch(url, {
+                    headers: { 'x-auth-token': localStorage.getItem('token') }
+                });
+
+                if (!res.ok) {
+                    throw new Error('Failed to fetch profile');
+                }
+
+                const data = await res.json();
+                renderProfile(type, data);
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('profile-container').innerHTML = `
+                    <div style="text-align: center; margin-top: 2rem;">
+                        <p style="color: red; font-size: 1.1rem; margin-bottom: 1rem;">Error loading profile. Please ensure you are logged in.</p>
+                        <a href="login.html" class="btn" style="width: auto; padding: 0.5rem 2rem;">Go to Login</a>
+                    </div>
+                `;
+            }
+        }
+
+        function renderProfile(type, data) {
+            const container = document.getElementById('profile-container');
+
+            if (type === 'candidate') {
+                const p = data.profile;
+                const sections = data.sections;
+
+                // Skills
+                let skillsHtml = '<p style="color:var(--text-muted)">No skills listed.</p>';
+                if (p.skills && p.skills.length > 0) {
+                    skillsHtml = p.skills.map(s => `<span class="tag">${s}</span>`).join('');
+                }
+
+                // Experience
+                let expHtml = '<p style="color:var(--text-muted)">No experience listed.</p>';
+                if (sections.experience && sections.experience.length > 0) {
+                    expHtml = sections.experience.map(e => `
+                        <div class="timeline-item">
+                            <h4 style="margin:0">${e.title}</h4>
+                            <span style="color:var(--primary-color)">${e.company_name}</span>
+                            <span style="display:block; font-size:0.85rem; color:var(--text-muted); margin: 0.25rem 0;">
+                                ${new Date(e.start_date).toLocaleDateString()} - 
+                                ${e.end_date ? new Date(e.end_date).toLocaleDateString() : 'Present'}
+                            </span>
+                            <p style="font-size:0.9rem; color:#e2e8f0;">${e.description || ''}</p>
+                        </div>
+                    `).join('');
+                }
+
+                // Education
+                let eduHtml = '<p style="color:var(--text-muted)">No education listed.</p>';
+                if (sections.education && sections.education.length > 0) {
+                    eduHtml = sections.education.map(e => `
+                        <div class="timeline-item">
+                            <h4 style="margin:0">${e.institution}</h4>
+                            <span style="color:var(--text-muted)">${e.degree} in ${e.field_of_study}</span>
+                            <span style="display:block; font-size:0.85rem; color:var(--text-muted); margin: 0.25rem 0;">
+                                ${e.start_date ? new Date(e.start_date).getFullYear() : ''} - 
+                                ${e.end_date ? new Date(e.end_date).getFullYear() : 'Present'}
+                            </span>
+                        </div>
+                    `).join('');
+                }
+
+                container.innerHTML = `
+                    <div class="profile-header">
+                        <div class="profile-avatar">${p.first_name.charAt(0)}</div>
+                        <h1 style="margin:0">${p.full_name}</h1>
+                        <p style="color: var(--primary-color); font-size: 1.1rem;">${p.headline || 'Candidate'}</p>
+                        <p style="color: var(--text-muted); margin-top: 0.5rem;">${p.city || ''}, ${p.country || ''}</p>
+                        
+                        <div style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: center;">
+                            ${p.email ? `<a href="mailto:${p.email}" class="btn" style="width:auto; padding:0.5rem 1rem; font-size:0.9rem;">Email</a>` : ''}
+                            ${p.linkedin_url ? `<a href="${p.linkedin_url}" target="_blank" class="btn" style="width:auto; padding:0.5rem 1rem; font-size:0.9rem; background: #0077b5;">LinkedIn</a>` : ''}
+                            ${p.github_url ? `<a href="${p.github_url}" target="_blank" class="btn" style="width:auto; padding:0.5rem 1rem; font-size:0.9rem; background: #333;">GitHub</a>` : ''}
+                        </div>
+                    </div>
+
+                    <div class="section-card">
+                        <h3 class="section-title">About</h3>
+                        <p style="line-height: 1.6;">${p.summary || 'No summary provided.'}</p>
+                    </div>
+
+                    <div class="section-card">
+                        <h3 class="section-title">Skills</h3>
+                        <div>${skillsHtml}</div>
+                    </div>
+
+                    <div class="section-card">
+                        <h3 class="section-title">Experience</h3>
+                        <div>${expHtml}</div>
+                    </div>
+
+                    <div class="section-card">
+                        <h3 class="section-title">Education</h3>
+                        <div>${eduHtml}</div>
+                    </div>
+                `;
+
+            } else {
+                // EMPLOYER
+                const e = data;
+
+                container.innerHTML = `
+                    <div class="profile-header">
+                        <div class="profile-avatar" style="border-radius: 12px;">${e.company_name.charAt(0)}</div>
+                        <h1 style="margin:0">${e.company_name}</h1>
+                        <p style="color: var(--primary-color); font-size: 1.1rem;">${e.industry || 'Company'}</p>
+                        <p style="color: var(--text-muted); margin-top: 0.5rem;">${e.location || ''}</p>
+                        
+                        <div style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: center;">
+                            ${e.website ? `<a href="${e.website.startsWith('http') ? e.website : 'https://' + e.website}" target="_blank" class="btn" style="width:auto; padding:0.5rem 1rem; font-size:0.9rem;">Visit Website</a>` : ''}
+                            ${e.contact_number ? `<a href="tel:${e.contact_number}" class="btn" style="width:auto; padding:0.5rem 1rem; font-size:0.9rem; background: var(--glass-bg); border: 1px solid var(--text-muted);">Call</a>` : ''}
+                        </div>
+                    </div>
+
+                    <div class="info-grid">
+                        <div class="section-card">
+                            <h3 class="section-title">Overview</h3>
+                            <div class="info-item">
+                                <label>Industry</label>
+                                <span>${e.industry}</span>
+                            </div>
+                            <div style="margin-top: 1rem;" class="info-item">
+                                <label>Location</label>
+                                <span>${e.location}</span>
+                            </div>
+                            <div style="margin-top: 1rem;" class="info-item">
+                                <label>Open Jobs</label>
+                                <span style="color: var(--primary-color); font-weight: bold;">${e.open_jobs} Active Postings</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+
+</html>

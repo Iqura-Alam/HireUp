@@ -161,7 +161,12 @@
                                 <div class="company-logo">${job.company_name.charAt(0)}</div>
                                 <div>
                                     <h3 style="margin: 0;">${job.title}</h3>
-                                    <span style="color: var(--text-muted); font-size: 0.9rem;">${job.company_name} • ${job.company_location}</span>
+                                    <span style="color: var(--text-muted); font-size: 0.9rem;">
+                                        ${job.company_name} • ${job.company_location}
+                                        ${job.company_website ? ` • <a href="${job.company_website}" target="_blank" style="color:var(--primary-color)">Website</a>` : ''}
+                                    </span>
+                                    <br>
+                                    <a href="profile.html?type=employer&id=${job.employer_id}" style="font-size: 0.8rem; color: var(--primary-color); text-decoration: underline;">View Company Profile</a>
                                 </div>
                             </div>
                             <div style="text-align: right;">

@@ -59,7 +59,7 @@ exports.addSkill = async (req, res) => {
 exports.getAllJobs = async (req, res) => {
     try {
         const result = await pool.query(`
-            SELECT j.*, e.company_name, e.industry, e.location as company_location,
+            SELECT j.*, e.company_name, e.industry, e.location as company_location, e.website as company_website,
             (
                 SELECT jsonb_agg(s.skill_name)
                 FROM job_requirement jr
@@ -124,7 +124,7 @@ exports.getJobDetails = async (req, res) => {
     try {
         const { jobId } = req.params;
         const result = await pool.query(`
-            SELECT j.*, e.company_name,
+            SELECT j.*, e.company_name, e.website as company_website,
             (SELECT jsonb_agg(
                 jsonb_build_object('question_id', jq.question_id, 'question_text', jq.question_text)
             ) FROM job_question jq WHERE jq.job_id = j.job_id) as questions
@@ -200,6 +200,51 @@ exports.getDashboardContext = async (req, res) => {
     } catch (error) {
         console.error('Dashboard Context Error:', error);
         res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// NEW: Public Profile View
+exports.getPublicProfile = async (req, res) => {
+    try {
+        // This accepts candidate_id (from params) NOT user_id from token
+        const candidateId = req.params.id;
+        console.log(`[getPublicProfile] Request for ID: ${candidateId}`);
+
+        if (!candidateId || isNaN(parseInt(candidateId))) {
+            return res.status(400).json({ message: 'Invalid Profile ID' });
+        }
+
+        // Query tables directly to be safe
+        const profileQuery = await pool.query(`
+            SELECT cp.*, u.email, u.username
+            FROM candidate_profile cp
+            JOIN users u ON u.user_id = cp.candidate_id
+            WHERE cp.candidate_id = $1
+        `, [candidateId]);
+        const profile = profileQuery.rows[0];
+
+        if (!profile) {
+            return res.status(404).json({ message: 'Profile not found' });
+        }
+
+        const expQuery = await pool.query('SELECT * FROM candidate_experience WHERE candidate_id = $1 ORDER BY start_date DESC', [candidateId]);
+        const eduQuery = await pool.query('SELECT * FROM candidate_education WHERE candidate_id = $1 ORDER BY start_date DESC', [candidateId]);
+        const projQuery = await pool.query('SELECT * FROM candidate_project WHERE candidate_id = $1 ORDER BY start_date DESC', [candidateId]);
+
+        const responseData = {
+            profile: profile,
+            sections: {
+                experience: expQuery.rows,
+                education: eduQuery.rows,
+                projects: projQuery.rows
+            }
+        };
+
+        res.json(responseData);
+
+    } catch (error) {
+        console.error('Public Profile Error:', error);
+        res.status(500).json({ message: 'Server Error', error: error.message });
     }
 };
 

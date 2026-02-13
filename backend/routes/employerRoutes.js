@@ -5,6 +5,7 @@ const auth = require('../middleware/authMiddleware');
 
 router.get('/profile', auth, employerController.getProfile);
 router.put('/profile', auth, employerController.updateProfile);
+router.get('/public/:id', auth, employerController.getPublicEmployerProfile);
 
 router.post('/jobs', auth, employerController.postJob);
 router.get('/jobs', auth, employerController.getJobs);
