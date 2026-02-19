@@ -396,10 +396,71 @@ async function addSkill(event) {
 }
 
 // ==========================================
+// Enrollments & Notifications
+// ==========================================
+async function loadEnrollments() {
+    const token = localStorage.getItem('token');
+    const container = document.getElementById('enrollments-list');
+    if (!container) return;
+
+    try {
+        const res = await fetch(`${API_BASE}/my-enrollments`, {
+            headers: { 'x-auth-token': token }
+        });
+        if (!res.ok) return;
+        const enrollments = await res.json();
+
+        if (enrollments.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-muted); font-style: italic;">No active enrollments.</p>';
+            return;
+        }
+
+        // Check for acceptance/rejection notifications
+        const updates = enrollments.filter(e => e.status === 'Shortlisted' || e.status === 'Rejected');
+        if (updates.length > 0) {
+            const msgs = updates.map(e => {
+                const label = e.status === 'Shortlisted' ? '✅ Accepted' : '❌ Rejected';
+                return `${label}: ${e.course_title}`;
+            });
+            // Show notification once per session
+            const notifKey = 'enrollment_notif_shown';
+            if (!sessionStorage.getItem(notifKey)) {
+                sessionStorage.setItem(notifKey, 'true');
+                alert('Enrollment Updates:\\n\\n' + msgs.join('\\n'));
+            }
+        }
+
+        // Render enrollment table
+        let html = '<table style="width:100%; border-collapse:collapse;">';
+        html += '<thead><tr><th style="text-align:left; padding:0.5rem; border-bottom:1px solid var(--glass-border); color:var(--text-muted);">Course</th><th style="text-align:left; padding:0.5rem; border-bottom:1px solid var(--glass-border); color:var(--text-muted);">Trainer</th><th style="text-align:left; padding:0.5rem; border-bottom:1px solid var(--glass-border); color:var(--text-muted);">Status</th></tr></thead><tbody>';
+
+        enrollments.forEach(e => {
+            let badgeColor = '#fbbf24'; // Applied - yellow
+            let label = e.status;
+            if (e.status === 'Shortlisted') { badgeColor = '#34d399'; label = 'Accepted'; }
+            if (e.status === 'Rejected') { badgeColor = '#ef4444'; label = 'Rejected'; }
+            if (e.completion_status === 'Completed') { badgeColor = '#10b981'; label = 'Completed'; }
+
+            html += `<tr>
+                <td style="padding:0.5rem; border-bottom:1px solid rgba(255,255,255,0.05);">${e.course_title}</td>
+                <td style="padding:0.5rem; border-bottom:1px solid rgba(255,255,255,0.05); color:var(--text-muted);">${e.trainer_name || '—'}</td>
+                <td style="padding:0.5rem; border-bottom:1px solid rgba(255,255,255,0.05);"><span style="background:rgba(${badgeColor === '#34d399' ? '52,211,153' : badgeColor === '#ef4444' ? '239,68,68' : badgeColor === '#10b981' ? '16,185,129' : '251,191,36'},0.2); color:${badgeColor}; padding:0.2rem 0.6rem; border-radius:12px; font-size:0.8rem; font-weight:600;">${label}</span></td>
+            </tr>`;
+        });
+        html += '</tbody></table>';
+        container.innerHTML = html;
+
+    } catch (error) {
+        console.error('Error loading enrollments:', error);
+    }
+}
+
+// ==========================================
 // Lifecycle
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     try { if (typeof checkAuth === 'function') checkAuth(); } catch (e) { }
     try { initSkillSelect(); } catch (e) { }
     try { loadDashboardData(); } catch (e) { }
+    try { loadEnrollments(); } catch (e) { }
 });

@@ -413,3 +413,23 @@ exports.enrollInCourse = async (req, res) => {
         res.status(500).json({ message: 'Server Error', error: error.message });
     }
 };
+
+exports.getMyEnrollments = async (req, res) => {
+    const candidateId = req.user.id;
+    try {
+        const result = await pool.query(`
+            SELECT e.enrollment_id, e.status, e.completion_status, e.enrolled_at,
+                   c.title AS course_title, c.mode,
+                   tp.organization_name AS trainer_name
+            FROM enrollment e
+            JOIN course c ON c.course_id = e.course_id
+            JOIN trainer_profile tp ON tp.trainer_id = c.trainer_id
+            WHERE e.candidate_id = $1
+            ORDER BY e.enrolled_at DESC
+        `, [candidateId]);
+        res.json(result.rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};

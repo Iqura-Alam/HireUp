@@ -481,8 +481,7 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
     UPDATE enrollment
-    SET status = p_status,
-        updated_at = now()
+    SET status = p_status
     WHERE enrollment_id = p_enrollment_id;
 END;
 $$;
@@ -753,6 +752,25 @@ BEGIN
             VALUES (v_job_id, v_question_text);
         END LOOP;
     END IF;
+END;
+$$;
+
+-- Update trainer profile
+CREATE OR REPLACE PROCEDURE sp_update_trainer_profile(
+    p_user_id BIGINT,
+    p_organization_name VARCHAR,
+    p_specialization VARCHAR,
+    p_contact_number VARCHAR
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    UPDATE trainer_profile
+    SET organization_name = COALESCE(p_organization_name, organization_name),
+        specialization    = COALESCE(p_specialization, specialization),
+        contact_number    = COALESCE(p_contact_number, contact_number),
+        updated_at        = now()
+    WHERE user_id = p_user_id;
 END;
 $$;
 

@@ -1,6 +1,46 @@
 
 const pool = require('../config/db');
 
+// ── Trainer Profile ──────────────────────────────────
+
+exports.getProfile = async (req, res) => {
+    const userId = req.user.id;
+    try {
+        const result = await pool.query(`
+            SELECT tp.trainer_id, tp.organization_name, tp.specialization, tp.contact_number,
+                   u.username, u.email
+            FROM trainer_profile tp
+            JOIN users u ON u.user_id = tp.user_id
+            WHERE tp.user_id = $1
+        `, [userId]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'Trainer profile not found' });
+        }
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+exports.updateProfile = async (req, res) => {
+    const userId = req.user.id;
+    const { organization_name, specialization, contact_number } = req.body;
+    try {
+        await pool.query(
+            'CALL sp_update_trainer_profile($1, $2, $3, $4)',
+            [userId, organization_name || null, specialization || null, contact_number || null]
+        );
+        res.json({ message: 'Profile updated successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// ── Courses ──────────────────────────────────────────
+
 exports.addCourse = async (req, res) => {
     const { title, description, duration_days, mode, fee, skill_ids, prereq_ids } = req.body;
     // Trainer ID should be fetched from user.id (which is user_id) mapping to trainer_id
@@ -70,7 +110,7 @@ exports.getCourseEnrollments = async (req, res) => {
             FROM enrollment e
             JOIN course c ON e.course_id = c.course_id
             JOIN candidate_profile cp ON e.candidate_id = cp.candidate_id
-            JOIN users u ON cp.user_id = u.user_id
+            JOIN users u ON cp.candidate_id = u.user_id
             WHERE c.trainer_id = $1
             ORDER BY e.enrolled_at DESC
         `, [trainerId]);
