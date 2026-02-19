@@ -135,10 +135,11 @@
     <script>
         const API_CANDIDATE = 'http://localhost:5000/api/candidate';
         const API_EMPLOYER = 'http://localhost:5000/api/employer';
+        const API_TRAINER = 'http://localhost:5000/api/trainer';
 
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
-            const type = urlParams.get('type'); // 'candidate' or 'employer'
+            const type = urlParams.get('type'); // 'candidate', 'employer', or 'trainer'
             const id = urlParams.get('id');
 
             if (!type || !id) {
@@ -168,6 +169,8 @@
 
                 if (type === 'candidate') {
                     url = `${API_CANDIDATE}/public/${id}`;
+                } else if (type === 'trainer') {
+                    url = `${API_TRAINER}/public/${id}`;
                 } else {
                     url = `${API_EMPLOYER}/public/${id}`;
                 }
@@ -270,6 +273,64 @@
                     <div class="section-card">
                         <h3 class="section-title">Education</h3>
                         <div>${eduHtml}</div>
+                    </div>
+                `;
+
+            } else if (type === 'trainer') {
+                // TRAINER
+                const t = data;
+                let coursesHtml = '<p style="color:var(--text-muted)">No courses published yet.</p>';
+                if (t.courses && t.courses.length > 0) {
+                    coursesHtml = t.courses.map(c => `
+                        <div style="padding: 1rem; border: 1px solid var(--glass-border); border-radius: 10px; margin-bottom: 0.75rem;">
+                            <div style="display:flex; justify-content:space-between; align-items:start;">
+                                <div>
+                                    <h4 style="margin:0; color: #a855f7;">${c.title}</h4>
+                                    <p style="font-size:0.85rem; color:var(--text-muted); margin:0.25rem 0;">${c.description || ''}</p>
+                                </div>
+                                <div style="text-align:right; white-space:nowrap;">
+                                    <span style="font-weight:bold; color:#10b981;">${c.fee} BDT</span><br>
+                                    <small style="color:var(--text-muted);">${c.duration_days} Days • ${c.mode}</small>
+                                </div>
+                            </div>
+                            <div style="margin-top:0.5rem; font-size:0.85rem; color:var(--text-muted);">Students: <strong style="color:white;">${c.enrolled_count}</strong></div>
+                        </div>
+                    `).join('');
+                }
+
+                container.innerHTML = `
+                    <div class="profile-header">
+                        <div class="profile-avatar">${(t.organization_name || t.username || 'T').charAt(0)}</div>
+                        <h1 style="margin:0">${t.organization_name || t.username}</h1>
+                        <p style="color: var(--primary-color); font-size: 1.1rem;">${t.specialization || 'Trainer'}</p>
+                        
+                        <div style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: center;">
+                            ${t.email ? `<a href="mailto:${t.email}" class="btn" style="width:auto; padding:0.5rem 1rem; font-size:0.9rem;">Email</a>` : ''}
+                            ${t.contact_number ? `<a href="tel:${t.contact_number}" class="btn" style="width:auto; padding:0.5rem 1rem; font-size:0.9rem; background: var(--glass-bg); border: 1px solid var(--text-muted);">Call</a>` : ''}
+                        </div>
+                    </div>
+
+                    <div class="section-card">
+                        <h3 class="section-title">Overview</h3>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <label>Specialization</label>
+                                <span>${t.specialization || '—'}</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Organization</label>
+                                <span>${t.organization_name || '—'}</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Total Courses</label>
+                                <span style="color: var(--primary-color); font-weight: bold;">${t.courses ? t.courses.length : 0}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-card">
+                        <h3 class="section-title">Published Courses</h3>
+                        ${coursesHtml}
                     </div>
                 `;
 

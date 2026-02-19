@@ -110,12 +110,21 @@
                         style="width: 80px; height: 80px; background: var(--primary-gradient); border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; color: white;">
                         <span id="avatar-initial">T</span>
                     </div>
+                    <p style="margin: 0; font-weight: 600; font-size: 1.1rem;" id="profile-username">Loading...</p>
+                    <p style="margin: 0.25rem 0 0; color: var(--text-muted); font-size: 0.85rem;" id="profile-email">
+                    </p>
                 </div>
-                <!-- <p><strong style="color: var(--text-muted);">Organization</strong><br> <span
-                        id="trainer-org">Loading...</span></p>
-                <div style="height: 1rem;"></div>
+                <p><strong style="color: var(--text-muted);">Organization</strong><br> <span id="trainer-org">—</span>
+                </p>
+                <div style="height: 0.75rem;"></div>
                 <p><strong style="color: var(--text-muted);">Specialization</strong><br> <span
-                        id="trainer-spec">...</span></p> -->
+                        id="trainer-spec">—</span></p>
+                <div style="height: 0.75rem;"></div>
+                <p><strong style="color: var(--text-muted);">Contact</strong><br> <span id="trainer-phone">—</span></p>
+                <div style="height: 1rem;"></div>
+                <button onclick="openEditProfileModal()" class="btn"
+                    style="width: 100%; background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.5);">Edit
+                    Profile</button>
             </div>
 
             <div class="card">
@@ -123,8 +132,22 @@
                 <p><strong style="color: var(--text-muted);">Total Courses</strong><br> <span id="stat-courses">0</span>
                 </p>
                 <div style="height: 1rem;"></div>
-                <!-- <p><strong style="color: var(--text-muted);">Total Students</strong><br> <span
-                        id="stat-students">0</span></p> -->
+                <p><strong style="color: var(--text-muted);">Total Students</strong><br> <span
+                        id="stat-students">0</span></p>
+            </div>
+
+            <!-- Top Skills Widget for Trainers -->
+            <div class="card"
+                style="margin-top: 1.5rem; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2);">
+                <h3 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <span style="font-size: 1.2rem;">📈</span> Market Demand
+                </h3>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1rem;">Top skills requested by
+                    companies. Create courses for these to attract more students!</p>
+                <div id="top-skills-list" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <div style="text-align: center; color: var(--text-muted); padding: 1rem; font-size: 0.8rem;">Loading
+                        trends...</div>
+                </div>
             </div>
         </div>
 
@@ -194,16 +217,15 @@
                 </div>
             </div>
 
-            <!-- Recent Enrollments
+            <!-- Recent Enrollments -->
             <div class="card">
                 <h3 id="enrollment-header">Recent Enrollments</h3>
                 <div id="enrollments-list" style="overflow-x: auto;">
-
                     <p style="color: var(--text-muted);">Loading enrollments...</p>
                 </div>
             </div>
         </div>
-    </div> -->
+    </div>
 
     <!-- Edit Course Modal -->
     <div id="editCourseModal" class="modal"
@@ -240,7 +262,6 @@
                 </div>
 
                 <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-
                     <button type="submit" class="btn">Save Changes</button>
                     <button type="button" onclick="closeEditModal()" class="btn"
                         style="background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border);">Cancel</button>
@@ -249,6 +270,32 @@
         </div>
     </div>
 
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal"
+        style="display:none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);">
+        <div class="card" style="max-width: 500px; margin: 3rem auto;">
+            <h3>Edit Trainer Profile</h3>
+            <form onsubmit="saveProfileEdit(event)">
+                <div class="form-group">
+                    <label>Organization Name</label>
+                    <input type="text" id="edit-org" placeholder="e.g., TechAcademy BD">
+                </div>
+                <div class="form-group">
+                    <label>Specialization</label>
+                    <input type="text" id="edit-spec" placeholder="e.g., Web Development">
+                </div>
+                <div class="form-group">
+                    <label>Contact Number</label>
+                    <input type="text" id="edit-phone" placeholder="e.g., +880-1700-000000">
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn">Save Profile</button>
+                    <button type="button" onclick="closeEditProfileModal()" class="btn"
+                        style="background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border);">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script src="js/auth.js"></script>
     <script src="js/trainer.js"></script>

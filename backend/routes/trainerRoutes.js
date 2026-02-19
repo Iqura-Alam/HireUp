@@ -7,7 +7,13 @@ const auth = require('../middleware/authMiddleware');
 
 router.use(auth);
 
+// Profile
+router.get('/profile', trainerController.getProfile);
+router.put('/profile', trainerController.updateProfile);
+router.get('/public/:id', trainerController.getPublicTrainerProfile);
+router.get('/top-skills', auth, trainerController.getTopSkills);
 
+// Courses
 router.post('/add-course', trainerController.addCourse);
 router.get('/courses', trainerController.getTrainerCourses);
 router.put('/courses/:id', trainerController.updateCourse);

@@ -406,18 +406,110 @@ async function completeCourse(enrollmentId) {
 async function loadProfile() {
     const token = localStorage.getItem('token');
     try {
-        const user = JSON.parse(atob(token.split('.')[1]));
-        document.getElementById('nav-username').textContent = user.username;
-        document.getElementById('avatar-initial').textContent = user.username.charAt(0).toUpperCase();
+        // Get username from localStorage (set during login), NOT from JWT (which only has id + role)
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        const displayName = storedUser.username || 'Trainer';
+        document.getElementById('nav-username').textContent = displayName;
+        document.getElementById('avatar-initial').textContent = displayName.charAt(0).toUpperCase();
 
-        // Fetch specific profile info if needed
-        const trainerRes = await fetch(`${TRAINER_API}/courses`, { headers: { 'x-auth-token': token } });
-        const courses = await trainerRes.json();
-        if (courses.length > 0) {
-            // Organization info could be here or in another profile endpoint
-            // For now, let's just use what's available
+        // Fetch full profile from API
+        const response = await fetch(`${TRAINER_API}/profile`, {
+            headers: { 'x-auth-token': token }
+        });
+
+        if (response.ok) {
+            const profile = await response.json();
+            // Store globally so edit modal can reuse
+            window._trainerProfile = profile;
+
+            document.getElementById('profile-username').textContent = profile.username || displayName;
+            document.getElementById('profile-email').textContent = profile.email || '';
+            document.getElementById('trainer-org').textContent = profile.organization_name || '—';
+            document.getElementById('trainer-spec').textContent = profile.specialization || '—';
+            document.getElementById('trainer-phone').textContent = profile.contact_number || '—';
+            document.getElementById('avatar-initial').textContent = (profile.username || displayName).charAt(0).toUpperCase();
         }
-    } catch (e) { }
+    } catch (e) {
+        console.error('Error loading profile:', e);
+    }
+}
+
+// ── Edit Profile Modal ──────────────────────────────
+
+function openEditProfileModal() {
+    const p = window._trainerProfile || {};
+    document.getElementById('edit-org').value = p.organization_name || '';
+    document.getElementById('edit-spec').value = p.specialization || '';
+    document.getElementById('edit-phone').value = p.contact_number || '';
+    document.getElementById('editProfileModal').style.display = 'block';
+}
+
+function closeEditProfileModal() {
+    document.getElementById('editProfileModal').style.display = 'none';
+}
+
+async function saveProfileEdit(event) {
+    event.preventDefault();
+    const token = localStorage.getItem('token');
+    const body = {
+        organization_name: document.getElementById('edit-org').value,
+        specialization: document.getElementById('edit-spec').value,
+        contact_number: document.getElementById('edit-phone').value
+    };
+
+    try {
+        const response = await fetch(`${TRAINER_API}/profile`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+            body: JSON.stringify(body)
+        });
+
+        if (response.ok) {
+            alert('Profile updated successfully');
+            closeEditProfileModal();
+            loadProfile(); // Refresh sidebar
+        } else {
+            const data = await response.json();
+            alert(data.message || 'Error updating profile');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Server Error');
+    }
+}
+
+async function loadTopSkills() {
+    const listDiv = document.getElementById('top-skills-list');
+    if (!listDiv) return;
+
+    try {
+        const response = await fetch(`${TRAINER_API}/top-skills`, {
+            headers: { 'x-auth-token': localStorage.getItem('token') }
+        });
+        const skills = await response.json();
+
+        if (!skills || skills.length === 0) {
+            listDiv.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 1rem; font-size: 0.8rem;">No trends available</div>';
+            return;
+        }
+
+        listDiv.innerHTML = skills.map((s, index) => `
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0.6rem; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 6px; transition: transform 0.2s ease;" 
+                 onmouseover="this.style.transform='translateX(3px)'" onmouseout="this.style.transform='translateX(0)'">
+                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                    <span style="font-weight: bold; color: ${index < 3 ? '#34d399' : 'var(--text-muted)'}; font-size: 0.8rem;">#${index + 1}</span>
+                    <span style="font-size: 0.8rem; font-weight: 500;">${s.skill_name}</span>
+                </div>
+                <div style="font-size: 0.7rem; color: #34d399; font-weight: bold;">
+                    ${s.demand_count} jobs
+                </div>
+            </div>
+        `).join('');
+
+    } catch (err) {
+        console.error('Top skills error:', err);
+        listDiv.innerHTML = '<div style="text-align: center; color: #fca5a5; padding: 1rem; font-size: 0.8rem;">Failed to load trends</div>';
+    }
 }
 
 function logout() {
@@ -438,6 +530,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadCourses();
     loadEnrollments();
     loadSkills();
+    loadTopSkills();
 });
 
 

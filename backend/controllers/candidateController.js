@@ -373,8 +373,11 @@ exports.deleteProject = async (req, res) => {
 };
 
 exports.getAllCourses = async (req, res) => {
+    const userId = req.user.id;
+    const { skill, trainer, maxFee, mode } = req.query;
+
     try {
-        const result = await pool.query(`
+        let query = `
             SELECT c.*, tp.organization_name as trainer_name,
             (
                 SELECT jsonb_agg(s.skill_name)
@@ -385,12 +388,46 @@ exports.getAllCourses = async (req, res) => {
             CASE WHEN e.enrollment_id IS NOT NULL THEN TRUE ELSE FALSE END as is_enrolled
             FROM course c
             JOIN trainer_profile tp ON tp.trainer_id = c.trainer_id
-            LEFT JOIN enrollment e ON e.course_id = c.course_id AND e.candidate_id = (SELECT candidate_id FROM candidate_profile WHERE candidate_id = $1)
-            ORDER BY c.created_at DESC
-        `, [req.user.id]);
+            LEFT JOIN enrollment e ON e.course_id = c.course_id AND e.candidate_id = (SELECT candidate_id FROM candidate_profile WHERE user_id = $1)
+            WHERE 1=1
+        `;
+        const params = [userId];
+        let pIndex = 2;
 
+        if (skill) {
+            // Support multiple skills (comma-separated or array)
+            const skillList = Array.isArray(skill) ? skill : skill.split(',').map(s => s.trim());
 
+            query += ` AND EXISTS (
+                SELECT 1 FROM course_skill cs2
+                JOIN skill s2 ON s2.skill_id = cs2.skill_id
+                WHERE cs2.course_id = c.course_id AND s2.skill_name = ANY($${pIndex})
+            )`;
+            params.push(skillList);
+            pIndex++;
+        }
 
+        if (trainer) {
+            query += ` AND tp.organization_name ILIKE $${pIndex}`;
+            params.push(`%${trainer}%`);
+            pIndex++;
+        }
+
+        if (maxFee) {
+            query += ` AND c.fee <= $${pIndex}`;
+            params.push(maxFee);
+            pIndex++;
+        }
+
+        if (mode && mode !== 'All') {
+            query += ` AND c.mode = $${pIndex}`;
+            params.push(mode);
+            pIndex++;
+        }
+
+        query += ` ORDER BY c.created_at DESC`;
+
+        const result = await pool.query(query, params);
         res.json(result.rows);
     } catch (error) {
         console.error(error);
@@ -411,5 +448,84 @@ exports.enrollInCourse = async (req, res) => {
             return res.status(400).json({ message: 'Already enrolled in this course' });
         }
         res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+};
+
+exports.getMyEnrollments = async (req, res) => {
+    const candidateId = req.user.id;
+    try {
+        const result = await pool.query(`
+            SELECT e.enrollment_id, e.status, e.completion_status, e.enrolled_at,
+                   c.title AS course_title, c.mode,
+                   tp.organization_name AS trainer_name
+            FROM enrollment e
+            JOIN course c ON c.course_id = e.course_id
+            JOIN trainer_profile tp ON tp.trainer_id = c.trainer_id
+            WHERE e.candidate_id = $1
+            ORDER BY e.enrolled_at DESC
+        `, [candidateId]);
+        res.json(result.rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+exports.getRecommendedCourses = async (req, res) => {
+    const candidateId = req.user.id;
+    const { jobId } = req.query;
+    try {
+        let result;
+        if (jobId) {
+            result = await pool.query(
+                'SELECT * FROM fn_recommend_courses_for_job($1, $2)', [candidateId, jobId]
+            );
+        } else {
+            result = await pool.query(
+                'SELECT * FROM fn_recommend_courses($1)', [candidateId]
+            );
+        }
+        res.json(result.rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+exports.getCourseFilters = async (req, res) => {
+    try {
+        // Get unique skills taught in all available courses
+        const skillsQuery = await pool.query(`
+            SELECT DISTINCT s.skill_name 
+            FROM course_skill cs
+            JOIN skill s ON s.skill_id = cs.skill_id
+            ORDER BY s.skill_name ASC
+        `);
+
+        // Get unique trainer organizations
+        const trainersQuery = await pool.query(`
+            SELECT DISTINCT tp.organization_name 
+            FROM trainer_profile tp
+            JOIN course c ON c.trainer_id = tp.trainer_id
+            ORDER BY tp.organization_name ASC
+        `);
+
+        res.json({
+            skills: skillsQuery.rows.map(r => r.skill_name),
+            trainers: trainersQuery.rows.map(r => r.organization_name)
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+exports.getTopSkills = async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM fn_top_skills()');
+        res.json(result.rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
     }
 };
