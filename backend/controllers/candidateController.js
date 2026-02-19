@@ -433,3 +433,24 @@ exports.getMyEnrollments = async (req, res) => {
         res.status(500).json({ message: 'Server Error' });
     }
 };
+
+exports.getRecommendedCourses = async (req, res) => {
+    const candidateId = req.user.id;
+    const { jobId } = req.query;
+    try {
+        let result;
+        if (jobId) {
+            result = await pool.query(
+                'SELECT * FROM fn_recommend_courses_for_job($1, $2)', [candidateId, jobId]
+            );
+        } else {
+            result = await pool.query(
+                'SELECT * FROM fn_recommend_courses($1)', [candidateId]
+            );
+        }
+        res.json(result.rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};

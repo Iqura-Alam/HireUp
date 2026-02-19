@@ -103,6 +103,15 @@
         <div class="modal-content"
             style="background-color: #1e1e2e; margin: 5% auto; padding: 20px; border: 1px solid var(--primary-color); width: 80%; max-width: 600px; border-radius: 10px;">
             <h3>Apply for <span id="modal-job-title">Job</span></h3>
+
+            <!-- Skill Gap & Course Recommendations -->
+            <div id="skill-gap-section"
+                style="display:none; margin-bottom: 1.5rem; padding: 1rem; border: 1px solid rgba(168,85,247,0.3); border-radius: 10px; background: rgba(168,85,247,0.05);">
+                <h4 style="margin: 0 0 0.75rem; color: #a855f7;">📊 Skill Gap Analysis</h4>
+                <div id="missing-skills-list" style="margin-bottom: 0.75rem;"></div>
+                <div id="recommended-courses-list"></div>
+            </div>
+
             <form onsubmit="submitApplication(event)">
                 <input type="hidden" id="modal-job-id">
 
@@ -221,9 +230,103 @@
                 }
 
                 document.getElementById('applicationModal').style.display = 'block';
+
+                // Fetch recommended courses (skill gap)
+                loadSkillGap(jobId);
             } catch (err) {
                 console.error(err);
                 alert('Error loading job details');
+            }
+        }
+
+        async function loadSkillGap(jobId) {
+            const section = document.getElementById('skill-gap-section');
+            const missingDiv = document.getElementById('missing-skills-list');
+            const coursesDiv = document.getElementById('recommended-courses-list');
+
+            try {
+                // Fetch recommended courses (passing jobId to get specific recommendations)
+                const recRes = await fetch(`${API_CANDIDATE}/recommended-courses?jobId=${jobId}`, {
+                    headers: { 'x-auth-token': localStorage.getItem('token') }
+                });
+                const recommended = await recRes.json();
+
+                if (!recommended || recommended.length === 0) {
+                    section.style.display = 'block';
+                    missingDiv.innerHTML = '<p style="color: #34d399; margin:0;">✅ You have all the skills needed for this job!</p>';
+                    coursesDiv.innerHTML = '';
+                    return;
+                }
+
+                // Collect all unique missing skills
+                const allMissing = new Set();
+                recommended.forEach(r => {
+                    if (r.missing_skills) r.missing_skills.forEach(s => allMissing.add(s));
+                });
+
+                if (allMissing.size === 0) {
+                    section.style.display = 'none';
+                    return;
+                }
+
+                section.style.display = 'block';
+
+                // Show missing skills
+                missingDiv.innerHTML = '<p style="color: var(--text-muted); margin: 0 0 0.5rem; font-size: 0.9rem;"><strong>Missing Skills:</strong></p>' +
+                    Array.from(allMissing).map(s => `<span style="display:inline-block; background:rgba(239,68,68,0.15); color:#fca5a5; padding:0.2rem 0.6rem; border-radius:12px; font-size:0.8rem; margin:0.15rem;">${s}</span>`).join('');
+
+                // Show recommended courses
+                coursesDiv.innerHTML = '<p style="color: var(--text-muted); margin: 0.75rem 0 0.5rem; font-size: 0.9rem;"><strong>📚 Recommended Courses:</strong></p>' +
+                    recommended.slice(0, 5).map(c => `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0.75rem; margin-bottom:0.4rem; background:rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:8px;">
+                            <div>
+                                <strong style="color:white; font-size:0.9rem;">${c.title}</strong>
+                                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Teaches: ${c.missing_skills.join(', ')}</div>
+                            </div>
+                            <button onclick="directEnroll('${c.course_id}', '${c.title.replace(/'/g, "\\'")}', this)" class="btn" style="width:auto; padding:0.25rem 0.75rem; font-size:0.75rem; white-space:nowrap;">Enroll</button>
+                        </div>
+                    `).join('');
+
+            } catch (err) {
+                console.error('Skill gap error:', err);
+            }
+        }
+
+        async function directEnroll(courseId, courseTitle, btn) {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Please login to enroll');
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to enroll in "${courseTitle}"?`)) return;
+
+            try {
+                btn.disabled = true;
+                btn.textContent = 'Enrolling...';
+
+                const res = await fetch(`${API_CANDIDATE}/courses/${courseId}/enroll`, {
+                    method: 'POST',
+                    headers: { 'x-auth-token': token }
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert('Enrollment successful!');
+                    btn.textContent = 'Enrolled';
+                    btn.style.background = 'var(--text-muted)';
+                    btn.style.cursor = 'not-allowed';
+                } else {
+                    alert(data.message || 'Enrollment failed');
+                    btn.disabled = false;
+                    btn.textContent = 'Enroll';
+                }
+            } catch (err) {
+                console.error('Enroll error:', err);
+                alert('Server error during enrollment');
+                btn.disabled = false;
+                btn.textContent = 'Enroll';
             }
         }
 
