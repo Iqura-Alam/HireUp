@@ -39,6 +39,40 @@ exports.updateProfile = async (req, res) => {
     }
 };
 
+exports.getPublicTrainerProfile = async (req, res) => {
+    const { id } = req.params; // trainer_id
+    try {
+        const result = await pool.query(`
+            SELECT tp.trainer_id, tp.organization_name, tp.specialization, tp.contact_number,
+                   u.username, u.email
+            FROM trainer_profile tp
+            JOIN users u ON u.user_id = tp.user_id
+            WHERE tp.trainer_id = $1
+        `, [id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'Trainer not found' });
+        }
+
+        const trainer = result.rows[0];
+
+        // Get their courses
+        const courses = await pool.query(`
+            SELECT c.title, c.description, c.duration_days, c.mode, c.fee,
+                   (SELECT COUNT(*) FROM enrollment e WHERE e.course_id = c.course_id) as enrolled_count
+            FROM course c
+            WHERE c.trainer_id = $1
+            ORDER BY c.created_at DESC
+        `, [id]);
+
+        trainer.courses = courses.rows;
+        res.json(trainer);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
 // ── Courses ──────────────────────────────────────────
 
 exports.addCourse = async (req, res) => {

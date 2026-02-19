@@ -10,6 +10,7 @@ router.use(auth);
 // Profile
 router.get('/profile', trainerController.getProfile);
 router.put('/profile', trainerController.updateProfile);
+router.get('/public/:id', trainerController.getPublicTrainerProfile);
 
 // Courses
 router.post('/add-course', trainerController.addCourse);
