@@ -11,6 +11,7 @@ router.use(auth);
 router.get('/profile', trainerController.getProfile);
 router.put('/profile', trainerController.updateProfile);
 router.get('/public/:id', trainerController.getPublicTrainerProfile);
+router.get('/top-skills', auth, trainerController.getTopSkills);
 
 // Courses
 router.post('/add-course', trainerController.addCourse);

@@ -640,7 +640,8 @@ CREATE OR REPLACE FUNCTION fn_recommend_courses(p_candidate_id BIGINT)
 RETURNS TABLE (
     course_id BIGINT,
     title VARCHAR,
-    missing_skills TEXT[]
+    missing_skills TEXT[],
+    enrollment_status VARCHAR
 )
 LANGUAGE plpgsql
 AS $$
@@ -656,15 +657,14 @@ BEGIN
     SELECT 
         c.course_id,
         c.title,
-        ARRAY_AGG(s.skill_name::TEXT)::TEXT[] AS missing_skills_taught
+        ARRAY_AGG(s.skill_name::TEXT)::TEXT[] AS missing_skills_taught,
+        e.completion_status::VARCHAR AS enrollment_status
     FROM course c
     JOIN course_skill cs ON c.course_id = cs.course_id
     JOIN skill s ON s.skill_id = cs.skill_id
     JOIN candidate_missing_skills cms ON cms.skill_id = cs.skill_id
-    WHERE c.course_id NOT IN (
-        SELECT e.course_id FROM enrollment e WHERE e.candidate_id = p_candidate_id
-    )
-    GROUP BY c.course_id, c.title;
+    LEFT JOIN enrollment e ON e.course_id = c.course_id AND e.candidate_id = p_candidate_id
+    GROUP BY c.course_id, c.title, e.completion_status;
 END;
 $$;
 
@@ -673,7 +673,8 @@ CREATE OR REPLACE FUNCTION fn_recommend_courses_for_job(p_candidate_id BIGINT, p
 RETURNS TABLE (
     course_id BIGINT,
     title VARCHAR,
-    missing_skills TEXT[]
+    missing_skills TEXT[],
+    enrollment_status VARCHAR
 )
 LANGUAGE plpgsql
 AS $$
@@ -690,15 +691,14 @@ BEGIN
     SELECT 
         c.course_id,
         c.title,
-        ARRAY_AGG(s.skill_name::TEXT)::TEXT[] AS missing_skills_taught
+        ARRAY_AGG(s.skill_name::TEXT)::TEXT[] AS missing_skills_taught,
+        e.completion_status::VARCHAR AS enrollment_status
     FROM course c
     JOIN course_skill cs ON c.course_id = cs.course_id
     JOIN skill s ON s.skill_id = cs.skill_id
     JOIN job_specific_missing_skills jsms ON jsms.skill_id = cs.skill_id
-    WHERE c.course_id NOT IN (
-        SELECT e.course_id FROM enrollment e WHERE e.candidate_id = p_candidate_id
-    )
-    GROUP BY c.course_id, c.title;
+    LEFT JOIN enrollment e ON e.course_id = c.course_id AND e.candidate_id = p_candidate_id
+    GROUP BY c.course_id, c.title, e.completion_status;
 END;
 $$;
 

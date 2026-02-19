@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HireUp - Browse Courses</title>
     <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
     <style>
         .container {
             max-width: 1000px;
@@ -94,7 +96,47 @@
     </nav>
 
     <div class="container">
-        <h1 style="margin-bottom: 2rem;">Upskill Your Career</h1>
+        <h1 style="margin-bottom: 0.5rem;">Upskill Your Career</h1>
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">Discover courses to bridge your skill gaps and advance
+            your journey.</p>
+
+        <!-- Filter Bar -->
+        <div class="card"
+            style="margin-bottom: 2.5rem; padding: 1.5rem; background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border);">
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: flex-end;">
+                <div class="form-group" style="margin: 0;">
+                    <label style="font-size: 0.8rem; color: var(--text-muted);">Skills (Select Multiple)</label>
+                    <select id="filter-skill" multiple placeholder="Select skills..." onchange="loadCourses()">
+                        <!-- Dynamic Skills -->
+                    </select>
+                </div>
+                <div class="form-group" style="margin: 0;">
+                    <label style="font-size: 0.8rem; color: var(--text-muted);">Trainer / Organization</label>
+                    <select id="filter-trainer" onchange="loadCourses()">
+                        <option value="">All Trainers</option>
+                        <!-- Dynamic Trainers -->
+                    </select>
+                </div>
+                <div class="form-group" style="margin: 0;">
+                    <label style="font-size: 0.8rem; color: var(--text-muted);">Max Fee (BDT)</label>
+                    <input type="number" id="filter-fee" placeholder="Limit" oninput="loadCourses()">
+                </div>
+                <div class="form-group" style="margin: 0;">
+                    <label style="font-size: 0.8rem; color: var(--text-muted);">Mode</label>
+                    <select id="filter-mode" onchange="loadCourses()">
+                        <option value="All">All Modes</option>
+                        <option value="Online">Online</option>
+                        <option value="Offline">Offline</option>
+                    </select>
+                </div>
+            </div>
+            <div style="margin-top: 1rem; text-align: right;">
+                <button onclick="resetFilters()"
+                    style="background:none; border:none; color:var(--primary-color); cursor:pointer; font-size: 0.85rem; text-decoration: underline;">Reset
+                    Filters</button>
+            </div>
+        </div>
 
         <div id="courses-feed">
             <p style="text-align: center; color: var(--text-muted);">Loading courses...</p>
@@ -104,68 +146,144 @@
     <script src="js/auth.js"></script>
     <script>
         const API_CANDIDATE = 'http://localhost:5000/api/candidate';
+        let filterTimeout;
+        let skillSelectInstance;
 
         async function loadCourses() {
-            try {
-                const res = await fetch(`${API_CANDIDATE}/courses`, {
-                    headers: { 'x-auth-token': localStorage.getItem('token') }
-                });
-                const courses = await res.json();
+            clearTimeout(filterTimeout);
 
-                const feed = document.getElementById('courses-feed');
-                feed.innerHTML = '';
-
-                if (courses.length === 0) {
-                    feed.innerHTML = '<p style="text-align: center; color: var(--text-muted);">No courses available at the moment.</p>';
-                    return;
+            // Simple debounce for smoother filtering
+            filterTimeout = setTimeout(async () => {
+                // Get multiple selected skills from TomSelect
+                let selectedSkills = [];
+                if (skillSelectInstance) {
+                    selectedSkills = skillSelectInstance.getValue();
+                    if (!Array.isArray(selectedSkills)) {
+                        selectedSkills = selectedSkills ? [selectedSkills] : [];
+                    }
                 }
 
-                courses.forEach(course => {
-                    const skillsHtml = course.skills_taught
-                        ? course.skills_taught.map(s => `<span class="skill-tag">${s}</span>`).join('')
-                        : '';
+                const trainer = document.getElementById('filter-trainer').value;
+                const maxFee = document.getElementById('filter-fee').value;
+                const mode = document.getElementById('filter-mode').value;
 
-                    const enrollBtn = course.is_enrolled
-                        ? `<button class="btn" disabled style="background: var(--text-muted); cursor: not-allowed; width: auto;">Enrolled</button>`
-                        : `<button onclick="enroll('${course.course_id}')" class="btn" style="width: auto; padding: 0.75rem 2rem;">Enroll Now</button>`;
+                // Build Query String
+                const params = new URLSearchParams();
+                if (selectedSkills.length > 0) params.append('skill', selectedSkills.join(','));
+                if (trainer) params.append('trainer', trainer);
+                if (maxFee) params.append('maxFee', maxFee);
+                if (mode && mode !== 'All') params.append('mode', mode);
 
-                    const div = document.createElement('div');
-                    div.className = 'course-card';
-                    div.innerHTML = `
-                        <div class="header">
-                            <div class="trainer-info">
-                                <div class="trainer-logo">${course.trainer_name ? course.trainer_name.charAt(0) : 'T'}</div>
-                                <div>
-                                    <h3 style="margin: 0;">${course.title}</h3>
-                                    <span style="color: var(--text-muted); font-size: 0.9rem;">${course.trainer_name || 'Individual Trainer'} • ${course.mode}</span>
-                                    <br>
-                                    <a href="profile.html?type=trainer&id=${course.trainer_id}" style="font-size: 0.8rem; color: var(--primary-color); text-decoration: underline;">View Trainer Profile</a>
+                try {
+                    const res = await fetch(`${API_CANDIDATE}/courses?${params.toString()}`, {
+                        headers: { 'x-auth-token': localStorage.getItem('token') }
+                    });
+                    const courses = await res.json();
+
+                    const feed = document.getElementById('courses-feed');
+                    feed.innerHTML = '';
+
+                    if (courses.length === 0) {
+                        feed.innerHTML = '<div style="text-align: center; padding: 3rem; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed var(--glass-border);">' +
+                            '<p style="color: var(--text-muted); margin: 0;">No courses found matching your criteria.</p>' +
+                            '<button onclick="resetFilters()" style="margin-top: 1rem; color: var(--primary-color); background: none; border: none; cursor: pointer; text-decoration: underline;">Clear all filters</button>' +
+                            '</div>';
+                        return;
+                    }
+
+                    courses.forEach(course => {
+                        const skillsHtml = course.skills_taught
+                            ? course.skills_taught.map(s => `<span class="skill-tag">${s}</span>`).join('')
+                            : '';
+
+                        const enrollBtn = course.is_enrolled
+                            ? `<button class="btn" disabled style="background: var(--text-muted); cursor: not-allowed; width: auto;">Enrolled</button>`
+                            : `<button onclick="enroll('${course.course_id}')" class="btn" style="width: auto; padding: 0.75rem 2rem;">Enroll Now</button>`;
+
+                        const div = document.createElement('div');
+                        div.className = 'course-card';
+                        div.innerHTML = `
+                            <div class="header">
+                                <div class="trainer-info">
+                                    <div class="trainer-logo">${course.trainer_name ? course.trainer_name.charAt(0) : 'T'}</div>
+                                    <div>
+                                        <h3 style="margin: 0;">${course.title}</h3>
+                                        <span style="color: var(--text-muted); font-size: 0.9rem;">${course.trainer_name || 'Individual Trainer'} • ${course.mode}</span>
+                                        <br>
+                                        <a href="profile.html?type=trainer&id=${course.trainer_id}" style="font-size: 0.8rem; color: var(--primary-color); text-decoration: underline;">View Trainer Profile</a>
+                                    </div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <span style="display: block; font-weight: bold; color: #10b981; font-size: 1.1rem;">${parseFloat(course.fee).toLocaleString()} BDT</span>
+                                    <small style="color: var(--text-muted); font-weight: 500;">${course.duration_days} Days</small>
                                 </div>
                             </div>
-                            <div style="text-align: right;">
-                                <span style="display: block; font-weight: bold; color: #10b981;">${course.fee} BDT</span>
-                                <small style="color: var(--text-muted);">${course.duration_days} Days</small>
+                            
+                            <p style="color: #cbd5e0; line-height: 1.6; margin-bottom: 1rem; font-size: 0.95rem;">${course.description || 'No description provided.'}</p>
+                            
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1.25rem;">
+                                <div class="skills-list" style="margin: 0;">
+                                    ${skillsHtml}
+                                </div>
+                                ${enrollBtn}
                             </div>
-                        </div>
-                        
-                        <p style="color: #e2e8f0; line-height: 1.6; margin-bottom: 1rem;">${course.description || 'No description provided.'}</p>
-                        
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 1rem;">
-                            <div class="skills-list">
-                                ${skillsHtml}
-                            </div>
-                            ${enrollBtn}
-                        </div>
-                    `;
+                        `;
 
+                        feed.appendChild(div);
+                    });
 
-                    feed.appendChild(div);
+                } catch (err) {
+                    console.error('Filter Error:', err);
+                    document.getElementById('courses-feed').innerHTML = '<p style="color: #fca5a5; text-align: center; padding: 2rem;">Connection Error. Could not fetch courses.</p>';
+                }
+            }, 300);
+        }
+
+        async function loadFilterOptions() {
+            try {
+                const res = await fetch(`${API_CANDIDATE}/course-filters`, {
+                    headers: { 'x-auth-token': localStorage.getItem('token') }
+                });
+                const { skills, trainers } = await res.json();
+
+                const skillSelect = document.getElementById('filter-skill');
+                const trainerSelect = document.getElementById('filter-trainer');
+
+                skills.forEach(skill => {
+                    const opt = document.createElement('option');
+                    opt.value = skill;
+                    opt.textContent = skill;
+                    skillSelect.appendChild(opt);
+                });
+
+                trainers.forEach(trainer => {
+                    const opt = document.createElement('option');
+                    opt.value = trainer;
+                    opt.textContent = trainer;
+                    trainerSelect.appendChild(opt);
+                });
+
+                // Initialize TomSelect for skills
+                skillSelectInstance = new TomSelect('#filter-skill', {
+                    plugins: ['remove_button'],
+                    onItemAdd: function () { this.setTextboxValue(''); this.refreshOptions(); },
+                    persist: false,
+                    create: false,
+                    allowEmptyOption: true,
+                    placeholder: "Search skills..."
                 });
 
             } catch (err) {
-                console.error(err);
-                document.getElementById('courses-feed').innerHTML = '<p style="color: red; text-align: center;">Error loading courses.</p>';
+                console.error('Error loading filter options:', err);
             }
+        }
+
+        function resetFilters() {
+            if (skillSelectInstance) skillSelectInstance.clear();
+            document.getElementById('filter-trainer').value = '';
+            document.getElementById('filter-fee').value = '';
+            document.getElementById('filter-mode').value = 'All';
+            loadCourses();
         }
 
         async function enroll(courseId) {
@@ -189,7 +307,8 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            checkAuth();
+            if (typeof checkAuth === 'function') checkAuth();
+            loadFilterOptions(); // Load dynamic dropdowns
             loadCourses();
         });
     </script>

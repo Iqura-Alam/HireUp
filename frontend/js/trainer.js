@@ -478,6 +478,40 @@ async function saveProfileEdit(event) {
     }
 }
 
+async function loadTopSkills() {
+    const listDiv = document.getElementById('top-skills-list');
+    if (!listDiv) return;
+
+    try {
+        const response = await fetch(`${TRAINER_API}/top-skills`, {
+            headers: { 'x-auth-token': localStorage.getItem('token') }
+        });
+        const skills = await response.json();
+
+        if (!skills || skills.length === 0) {
+            listDiv.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 1rem; font-size: 0.8rem;">No trends available</div>';
+            return;
+        }
+
+        listDiv.innerHTML = skills.map((s, index) => `
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0.6rem; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 6px; transition: transform 0.2s ease;" 
+                 onmouseover="this.style.transform='translateX(3px)'" onmouseout="this.style.transform='translateX(0)'">
+                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                    <span style="font-weight: bold; color: ${index < 3 ? '#34d399' : 'var(--text-muted)'}; font-size: 0.8rem;">#${index + 1}</span>
+                    <span style="font-size: 0.8rem; font-weight: 500;">${s.skill_name}</span>
+                </div>
+                <div style="font-size: 0.7rem; color: #34d399; font-weight: bold;">
+                    ${s.demand_count} jobs
+                </div>
+            </div>
+        `).join('');
+
+    } catch (err) {
+        console.error('Top skills error:', err);
+        listDiv.innerHTML = '<div style="text-align: center; color: #fca5a5; padding: 1rem; font-size: 0.8rem;">Failed to load trends</div>';
+    }
+}
+
 function logout() {
     localStorage.removeItem('token');
     window.location.href = 'index.html';
@@ -496,6 +530,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadCourses();
     loadEnrollments();
     loadSkills();
+    loadTopSkills();
 });
 
 

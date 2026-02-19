@@ -33,6 +33,7 @@ async function loadDashboardData() {
 
                 try {
                     renderDashboard(data);
+                    loadTopSkills(); // Fetch top skills
                 } catch (e) {
                     console.error('Crash in renderDashboard:', e);
                 }
@@ -456,6 +457,43 @@ async function loadEnrollments() {
 }
 
 // ==========================================
+// ==========================================
+// Top Skills
+// ==========================================
+async function loadTopSkills() {
+    const listDiv = document.getElementById('top-skills-list');
+    if (!listDiv) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/top-skills`, {
+            headers: { 'x-auth-token': localStorage.getItem('token') }
+        });
+        const skills = await response.json();
+
+        if (!skills || skills.length === 0) {
+            listDiv.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 1rem;">No data available</div>';
+            return;
+        }
+
+        listDiv.innerHTML = skills.map((s, index) => `
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 8px; transition: transform 0.2s ease;" 
+                 onmouseover="this.style.transform='translateX(5px)'" onmouseout="this.style.transform='translateX(0)'">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <span style="font-weight: bold; color: ${index < 3 ? 'var(--primary-color)' : 'var(--text-muted)'}; font-size: 0.9rem;">#${index + 1}</span>
+                    <span style="font-size: 0.9rem; font-weight: 500;">${s.skill_name}</span>
+                </div>
+                <div style="background: rgba(52, 211, 153, 0.1); color: #34d399; padding: 0.1rem 0.5rem; border-radius: 10px; font-size: 0.7rem; font-weight: bold;">
+                    ${s.demand_count} jobs
+                </div>
+            </div>
+        `).join('');
+
+    } catch (err) {
+        console.error('Top skills error:', err);
+        listDiv.innerHTML = '<div style="text-align: center; color: #fca5a5; padding: 1rem; font-size: 0.8rem;">Failed to load skills</div>';
+    }
+}
+
 // Lifecycle
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {

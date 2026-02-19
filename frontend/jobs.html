@@ -109,6 +109,9 @@
                 style="display:none; margin-bottom: 1.5rem; padding: 1rem; border: 1px solid rgba(168,85,247,0.3); border-radius: 10px; background: rgba(168,85,247,0.05);">
                 <h4 style="margin: 0 0 0.75rem; color: #a855f7;">📊 Skill Gap Analysis</h4>
                 <div id="missing-skills-list" style="margin-bottom: 0.75rem;"></div>
+                <div id="skill-warning"
+                    style="display: none; padding: 0.75rem; border-radius: 8px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; font-size: 0.85rem; margin-bottom: 1rem;">
+                </div>
                 <div id="recommended-courses-list"></div>
             </div>
 
@@ -251,41 +254,79 @@
                 });
                 const recommended = await recRes.json();
 
-                if (!recommended || recommended.length === 0) {
-                    section.style.display = 'block';
-                    missingDiv.innerHTML = '<p style="color: #34d399; margin:0;">✅ You have all the skills needed for this job!</p>';
-                    coursesDiv.innerHTML = '';
-                    return;
-                }
+                // Build detailed skill map
+                const skillsByStatus = {
+                    missing: new Set(),
+                    inProgress: new Set(),
+                    possessed: new Set()
+                };
 
-                // Collect all unique missing skills
-                const allMissing = new Set();
                 recommended.forEach(r => {
-                    if (r.missing_skills) r.missing_skills.forEach(s => allMissing.add(s));
+                    const status = r.enrollment_status || 'Missing';
+                    if (r.missing_skills) {
+                        r.missing_skills.forEach(s => {
+                            if (status === 'In Progress') {
+                                skillsByStatus.inProgress.add(s);
+                            } else {
+                                skillsByStatus.missing.add(s);
+                            }
+                        });
+                    }
                 });
 
-                if (allMissing.size === 0) {
-                    section.style.display = 'none';
+                // If no recommendations are returned, it MIGHT mean the candidate has all skills
+                // But we must be careful—if the backend returned NOTHING, it could also mean no courses found.
+                // However, our new fn_recommend_courses_for_job returns all missing skills from job requirements.
+
+                if (skillsByStatus.missing.size === 0 && skillsByStatus.inProgress.size === 0) {
+                    section.style.display = 'block';
+                    missingDiv.innerHTML = '<p style="color: #34d399; margin:0; font-weight: 500;">✅ You have all the skills needed for this job!</p>';
+                    coursesDiv.innerHTML = '';
+                    document.getElementById('skill-warning').style.display = 'none';
                     return;
                 }
 
                 section.style.display = 'block';
 
-                // Show missing skills
-                missingDiv.innerHTML = '<p style="color: var(--text-muted); margin: 0 0 0.5rem; font-size: 0.9rem;"><strong>Missing Skills:</strong></p>' +
-                    Array.from(allMissing).map(s => `<span style="display:inline-block; background:rgba(239,68,68,0.15); color:#fca5a5; padding:0.2rem 0.6rem; border-radius:12px; font-size:0.8rem; margin:0.15rem;">${s}</span>`).join('');
+                // Display missing vs in-progress skills
+                let missingHtml = '';
+                if (skillsByStatus.missing.size > 0) {
+                    missingHtml += `<p style="color: #fca5a5; margin: 0 0 0.5rem; font-size: 0.9rem;"><strong>Required Skills (Missing):</strong></p>` +
+                        Array.from(skillsByStatus.missing).map(s => `<span style="display:inline-block; background:rgba(239,68,68,0.15); color:#fca5a5; padding:0.2rem 0.6rem; border-radius:12px; font-size:0.8rem; margin:0.15rem; border: 1px solid rgba(239,68,68,0.2);">${s}</span>`).join('');
+                }
+                if (skillsByStatus.inProgress.size > 0) {
+                    missingHtml += `<p style="color: #60a5fa; margin: 0.75rem 0 0.5rem; font-size: 0.9rem;"><strong>Skills In Progress (Enrolled):</strong></p>` +
+                        Array.from(skillsByStatus.inProgress).map(s => `<span style="display:inline-block; background:rgba(59,130,246,0.15); color:#93c5fd; padding:0.2rem 0.6rem; border-radius:12px; font-size:0.8rem; margin:0.15rem; border: 1px solid rgba(59,130,246,0.2);">${s} (Learning)</span>`).join('');
+                }
+                missingDiv.innerHTML = missingHtml;
+
+                // Show explicit warning if application is risky
+                const warning = document.getElementById('skill-warning');
+                if (skillsByStatus.missing.size > 0 || skillsByStatus.inProgress.size > 0) {
+                    warning.style.display = 'block';
+                    warning.innerHTML = `⚠️ <strong>Skill Requirement Notice:</strong> You are currently missing skills for this role. ${skillsByStatus.inProgress.size > 0 ? "Enrollment is active, but skills are only credited upon course completion." : "We recommend enrolling in the courses below before applying."}`;
+                } else {
+                    warning.style.display = 'none';
+                }
 
                 // Show recommended courses
-                coursesDiv.innerHTML = '<p style="color: var(--text-muted); margin: 0.75rem 0 0.5rem; font-size: 0.9rem;"><strong>📚 Recommended Courses:</strong></p>' +
-                    recommended.slice(0, 5).map(c => `
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0.75rem; margin-bottom:0.4rem; background:rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:8px;">
-                            <div>
+                coursesDiv.innerHTML = '<p style="color: var(--text-muted); margin: 1rem 0 0.5rem; font-size: 0.9rem;"><strong>📚 Recommended Courses:</strong></p>' +
+                    recommended.slice(0, 5).map(c => {
+                        const isEnrolled = c.enrollment_status === 'In Progress';
+                        return `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.75rem; margin-bottom:0.5rem; background:rgba(255,255,255,0.03); border:1px solid ${isEnrolled ? 'rgba(59,130,246,0.3)' : 'var(--glass-border)'}; border-radius:8px;">
+                            <div style="flex: 1;">
                                 <strong style="color:white; font-size:0.9rem;">${c.title}</strong>
                                 <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Teaches: ${c.missing_skills.join(', ')}</div>
                             </div>
-                            <button onclick="directEnroll('${c.course_id}', '${c.title.replace(/'/g, "\\'")}', this)" class="btn" style="width:auto; padding:0.25rem 0.75rem; font-size:0.75rem; white-space:nowrap;">Enroll</button>
+                            <button onclick="${isEnrolled ? '' : `directEnroll('${c.course_id}', '${c.title.replace(/'/g, "\\'")}', this)`}" 
+                                    class="btn" 
+                                    ${isEnrolled ? 'disabled' : ''}
+                                    style="width:auto; padding:0.3rem 1rem; font-size:0.75rem; white-space:nowrap; ${isEnrolled ? 'background: rgba(59,130,246,0.4); cursor: not-allowed;' : ''}">
+                                ${isEnrolled ? 'Learning...' : 'Enroll'}
+                            </button>
                         </div>
-                    `).join('');
+                    `}).join('');
 
             } catch (err) {
                 console.error('Skill gap error:', err);
