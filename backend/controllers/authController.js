@@ -122,8 +122,17 @@ exports.login = async (req, res) => {
 
         const user = userResult.rows[0];
 
-        // Check if account is deleted
+        // Check if account is active
         if (user.is_active === false) {
+            if (user.deleted_at) {
+                return res.status(403).json({ message: 'Account deleted. Please contact support.' });
+            }
+            if (user.account_status === 'Suspended') {
+                return res.status(403).json({ message: 'Your account is temporarily suspended. Please contact support.' });
+            }
+            if (user.account_status === 'Banned') {
+                return res.status(403).json({ message: 'Your account has been permanently banned due to policy violations.' });
+            }
             return res.status(403).json({ message: 'Account deactivated. Please contact support.' });
         }
 

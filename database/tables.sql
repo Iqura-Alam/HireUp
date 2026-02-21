@@ -195,6 +195,7 @@ CREATE TABLE IF NOT EXISTS employer (
   contact_number   VARCHAR(30),
   email            VARCHAR(120),
   website          VARCHAR(200),
+  is_verified      BOOLEAN NOT NULL DEFAULT FALSE,
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   CONSTRAINT uq_employer_company UNIQUE (company_name)
@@ -272,6 +273,7 @@ CREATE TABLE IF NOT EXISTS trainer_profile (
   organization_name VARCHAR(150),
   specialization  VARCHAR(100),
   contact_number  VARCHAR(30),
+  is_verified     BOOLEAN NOT NULL DEFAULT FALSE,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
   CONSTRAINT uq_trainer_user UNIQUE (user_id)

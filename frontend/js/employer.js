@@ -21,6 +21,15 @@ async function loadEmployerProfile() {
             document.getElementById('edit-location').value = data.location;
             document.getElementById('edit-contact').value = data.contact_number;
             document.getElementById('edit-website').value = data.website;
+
+            // Handle Verification Status
+            if (data.is_verified) {
+                document.getElementById('btn-post-job').style.display = 'block';
+                document.getElementById('employer-verification-warning').style.display = 'none';
+            } else {
+                document.getElementById('btn-post-job').style.display = 'none';
+                document.getElementById('employer-verification-warning').style.display = 'block';
+            }
         }
     } catch (err) {
         console.error(err);

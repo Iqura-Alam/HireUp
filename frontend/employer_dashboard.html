@@ -110,10 +110,15 @@
 
         <!-- Right: Jobs & Actions -->
         <div class="right-col">
+            <div id="employer-verification-warning"
+                style="display: none; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <strong>Pending Verification:</strong> Your account is currently pending admin approval. You cannot post
+                new jobs until your account is verified.
+            </div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                 <h2 style="margin: 0;">Job Postings</h2>
-                <button onclick="openPostJob()" class="btn" style="width: auto; padding: 0.75rem 2rem;">+ Post New
-                    Job</button>
+                <button id="btn-post-job" onclick="openPostJob()" class="btn"
+                    style="width: auto; padding: 0.75rem 2rem; display: none;">+ Post New Job</button>
             </div>
 
             <div id="jobs-list">

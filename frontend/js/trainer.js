@@ -428,6 +428,18 @@ async function loadProfile() {
             document.getElementById('trainer-spec').textContent = profile.specialization || '—';
             document.getElementById('trainer-phone').textContent = profile.contact_number || '—';
             document.getElementById('avatar-initial').textContent = (profile.username || displayName).charAt(0).toUpperCase();
+
+            // Handle Verification Status
+            const warningEl = document.getElementById('trainer-verification-warning');
+            const createCardEl = document.getElementById('create-course-card');
+
+            if (profile.is_verified) {
+                if (warningEl) warningEl.style.display = 'none';
+                if (createCardEl) createCardEl.style.display = 'block';
+            } else {
+                if (warningEl) warningEl.style.display = 'block';
+                if (createCardEl) createCardEl.style.display = 'none';
+            }
         }
     } catch (e) {
         console.error('Error loading profile:', e);

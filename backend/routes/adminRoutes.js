@@ -23,4 +23,14 @@ router.get('/audit-logs', adminController.getAuditLogs);
 router.get('/popular-courses', adminController.getPopularCourses);
 router.get('/top-skills', adminController.getTopSkills);
 
+// User Verification Queue
+router.get('/pending-users', adminController.getPendingUsers);
+router.post('/verify-user/:role/:id', adminController.verifyUser);
+router.post('/verify-all', adminController.verifyAllPending);
+
+// Account Controls
+router.get('/users', adminController.getAllUsers);
+router.post('/users/:id/status', adminController.updateUserStatus);
+router.delete('/users/:id', adminController.deleteUser);
+
 module.exports = router;
