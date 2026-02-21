@@ -147,10 +147,15 @@
                     <label>Website</label>
                     <input type="text" id="edit-website">
                 </div>
-                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-                    <button type="submit" class="btn">Save Changes</button>
-                    <button type="button" onclick="closeModal('editProfileModal')" class="btn"
-                        style="background: transparent; border: 1px solid var(--text-muted);">Cancel</button>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                    <button type="button" onclick="deleteAccount()" class="btn"
+                        style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); width: auto;">Delete
+                        Account</button>
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="button" onclick="closeModal('editProfileModal')" class="btn"
+                            style="background: transparent; border: 1px solid var(--text-muted); width: auto;">Cancel</button>
+                        <button type="submit" class="btn" style="width: auto;">Save Changes</button>
+                    </div>
                 </div>
             </form>
         </div>

@@ -122,11 +122,19 @@ exports.login = async (req, res) => {
 
         const user = userResult.rows[0];
 
+        // Check if account is deleted
+        if (user.is_active === false) {
+            return res.status(403).json({ message: 'Account deactivated. Please contact support.' });
+        }
+
         //  Validate Password
         const isMatch = await bcrypt.compare(password, user.password_hash);
         if (!isMatch) {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
+
+        // Update last_login_at
+        await pool.query('UPDATE users SET last_login_at = NOW() WHERE user_id = $1', [user.user_id]);
 
         // 3. Create JWT Token
         const payload = {
@@ -149,5 +157,16 @@ exports.login = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+exports.deleteAccount = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        await pool.query('UPDATE users SET deleted_at = NOW(), is_active = FALSE WHERE user_id = $1', [userId]);
+        res.json({ message: 'Account deleted successfully' });
+    } catch (error) {
+        console.error('Delete Account Error:', error);
+        res.status(500).json({ message: 'Server Error', error: error.message });
     }
 };

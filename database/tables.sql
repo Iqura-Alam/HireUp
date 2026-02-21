@@ -39,13 +39,10 @@ CREATE TABLE IF NOT EXISTS users (
   
   -- Account Status & Health
   is_active        BOOLEAN NOT NULL DEFAULT TRUE,
-  email_verified_at TIMESTAMPTZ,
+  email_verified_at TIMESTAMPTZ DEFAULT now(),
   last_login_at    TIMESTAMPTZ,
-  password_reset_token_hash VARCHAR(255),
-  password_reset_expires_at TIMESTAMPTZ,
   
   -- Profile / Soft Delete
-  avatar_url       VARCHAR(255),
   deleted_at       TIMESTAMPTZ,
   
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),

@@ -48,7 +48,7 @@
         </div>
 
         <!-- ACTUAL CONTENT (Hidden until loaded) -->
-        <div id="dashboard-content" style="display: none; contents: inherit;">
+        <div id="dashboard-content" style="display: none;">
             <!-- Left Column: Profile Info -->
             <div class="left-col">
 
@@ -259,10 +259,15 @@
                     <input type="text" id="edit-portfolio" placeholder="Portfolio URL">
                 </div>
 
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary"
-                        onclick="closeModal('modal-profile')">Cancel</button>
-                    <button type="submit" class="btn">Save Changes</button>
+                <div class="modal-actions" style="justify-content: space-between;">
+                    <button type="button" onclick="deleteAccount()" class="btn"
+                        style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); width: auto;">Delete
+                        Account</button>
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="button" class="btn btn-secondary"
+                            onclick="closeModal('modal-profile')">Cancel</button>
+                        <button type="submit" class="btn">Save Changes</button>
+                    </div>
                 </div>
             </form>
         </div>

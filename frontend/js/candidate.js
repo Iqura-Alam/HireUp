@@ -354,6 +354,28 @@ async function saveGeneric(endpoint, payload, modalId) {
     } catch (e) { console.error(e); }
 }
 
+async function deleteAccount() {
+    if (!confirm("Are you sure you want to delete your account? This action cannot be undone.")) return;
+
+    try {
+        const res = await fetch(`${API_BASE}/profile`, {
+            method: 'DELETE',
+            headers: { 'x-auth-token': localStorage.getItem('token') }
+        });
+
+        if (res.ok) {
+            alert('Account deleted successfully.');
+            logout();
+        } else {
+            const data = await res.json();
+            alert(data.message || 'Failed to delete account');
+        }
+    } catch (err) {
+        console.error('Delete Account Error:', err);
+        alert('An error occurred while deleting the account.');
+    }
+}
+
 // ==========================================
 // Skills
 // ==========================================
