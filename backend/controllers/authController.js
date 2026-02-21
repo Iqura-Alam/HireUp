@@ -16,6 +16,11 @@ exports.register = async (req, res) => {
             return res.status(400).json({ message: 'Please fill all required fields' });
         }
 
+        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{6,}$/;
+        if (!passwordRegex.test(password)) {
+            return res.status(400).json({ message: 'Password must be at least 6 characters long and include at least one letter and one number.' });
+        }
+
         // Hash password
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);

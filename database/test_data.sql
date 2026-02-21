@@ -1,6 +1,6 @@
 -- =========================================================
 -- MASTER SCRIPT: SKILLS + BANGLADESH TEST DATA (HASHED PASSWORDS)
--- Password for all users: 1234
+-- Password for all users: Test1234
 -- =========================================================
 
 -- 1. SAFETY RESET
@@ -57,86 +57,87 @@ END $$;
 
 
 -- =========================================================
--- SECTION B: REGISTER EMPLOYERS (Password: 1234)
+-- SECTION B: REGISTER EMPLOYERS
 -- =========================================================
 -- Fintech
-CALL sp_register_employer('hr_bkash', 'careers@bkash.com', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'bKash Limited', 'Fintech', 'Dhaka', '01700000001', 'bkash.com');
-CALL sp_register_employer('hr_nagad', 'talent@nagad.com.bd', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Nagad', 'Fintech', 'Dhaka', '01700000002', 'nagad.com.bd');
-CALL sp_register_employer('hr_dbbl', 'hr@dbbl.com', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Dutch-Bangla Bank', 'Banking', 'Motijheel', '01700000003', 'dutchbanglabank.com');
+CALL sp_register_employer('hr_bkash', 'careers@bkash.com', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'bKash Limited', 'Fintech', 'Dhaka', '01700000001', 'bkash.com');
+CALL sp_register_employer('hr_nagad', 'talent@nagad.com.bd', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Nagad', 'Fintech', 'Dhaka', '01700000002', 'nagad.com.bd');
+CALL sp_register_employer('hr_dbbl', 'hr@dbbl.com', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Dutch-Bangla Bank', 'Banking', 'Motijheel', '01700000003', 'dutchbanglabank.com');
 
 -- Telco
-CALL sp_register_employer('hr_gp', 'careers@grameenphone.com', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Grameenphone', 'Telco', 'Bashundhara', '01700000004', 'grameenphone.com');
-CALL sp_register_employer('hr_robi', 'jobs@robi.com.bd', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Robi Axiata', 'Telco', 'Gulshan', '01800000005', 'robi.com.bd');
-CALL sp_register_employer('hr_banglalink', 'hr@banglalink.net', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Banglalink', 'Telco', 'Gulshan', '01900000006', 'banglalink.net');
+CALL sp_register_employer('hr_gp', 'careers@grameenphone.com', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Grameenphone', 'Telco', 'Bashundhara', '01700000004', 'grameenphone.com');
+CALL sp_register_employer('hr_robi', 'jobs@robi.com.bd', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Robi Axiata', 'Telco', 'Gulshan', '01800000005', 'robi.com.bd');
+CALL sp_register_employer('hr_banglalink', 'hr@banglalink.net', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Banglalink', 'Telco', 'Gulshan', '01900000006', 'banglalink.net');
 
 -- Software & IT
-CALL sp_register_employer('hr_bs23', 'talent@brainstation-23.com', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Brain Station 23', 'Software', 'Mohakhali', '01711111111', 'brainstation-23.com');
-CALL sp_register_employer('hr_tigerit', 'careers@tigerit.com', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'TigerIT Bangladesh', 'Software', 'Banani', '01722222222', 'tigerit.com');
-CALL sp_register_employer('hr_therap', 'jobs@therapbd.com', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Therap BD', 'HealthTech', 'Banani', '01733333333', 'therapbd.com');
-CALL sp_register_employer('hr_enosis', 'jobs@enosis.com', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Enosis Solutions', 'Software', 'Gulshan', '01744444444', 'enosisbd.com');
+CALL sp_register_employer('hr_bs23', 'talent@brainstation-23.com', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Brain Station 23', 'Software', 'Mohakhali', '01711111111', 'brainstation-23.com');
+CALL sp_register_employer('hr_tigerit', 'careers@tigerit.com', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'TigerIT Bangladesh', 'Software', 'Banani', '01722222222', 'tigerit.com');
+CALL sp_register_employer('hr_therap', 'jobs@therapbd.com', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Therap BD', 'HealthTech', 'Banani', '01733333333', 'therapbd.com');
+CALL sp_register_employer('hr_enosis', 'jobs@enosis.com', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Enosis Solutions', 'Software', 'Gulshan', '01744444444', 'enosisbd.com');
 
 -- Corporate
-CALL sp_register_employer('hr_unilever', 'talent@unilever.bd', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Unilever BD', 'FMCG', 'Gulshan', '01900000001', 'unilever.com.bd');
-CALL sp_register_employer('hr_square', 'hr@squaregroup.com', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Square Pharmaceuticals', 'Pharma', 'Tejgaon', '01755555555', 'squarepharma.com.bd');
-CALL sp_register_employer('hr_walton', 'jobs@waltonbd.com', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Walton Hi-Tech', 'Electronics', 'Bashundhara', '01600000001', 'waltonbd.com');
-CALL sp_register_employer('hr_aarong', 'careers@aarong.com', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Aarong (BRAC)', 'Retail', 'Tejgaon', '01500000001', 'aarong.com');
+CALL sp_register_employer('hr_unilever', 'talent@unilever.bd', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Unilever BD', 'FMCG', 'Gulshan', '01900000001', 'unilever.com.bd');
+CALL sp_register_employer('hr_square', 'hr@squaregroup.com', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Square Pharmaceuticals', 'Pharma', 'Tejgaon', '01755555555', 'squarepharma.com.bd');
+CALL sp_register_employer('hr_walton', 'jobs@waltonbd.com', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Walton Hi-Tech', 'Electronics', 'Bashundhara', '01600000001', 'waltonbd.com');
+CALL sp_register_employer('hr_aarong', 'careers@aarong.com', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Aarong (BRAC)', 'Retail', 'Tejgaon', '01500000001', 'aarong.com');
 
 -- Startup
-CALL sp_register_employer('hr_pathao', 'people@pathao.com', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Pathao', 'Logistics', 'Gulshan', '01999999999', 'pathao.com');
+CALL sp_register_employer('hr_pathao', 'people@pathao.com', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Pathao', 'Logistics', 'Gulshan', '01999999999', 'pathao.com');
 
 
 -- =========================================================
--- SECTION C: REGISTER TRAINERS (Password: 1234)
+-- SECTION C: REGISTER TRAINERS
 -- =========================================================
-CALL sp_register_trainer('tr_10ms', 'partners@10ms.com', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', '10 Minute School', 'General Ed', '01600000000');
-CALL sp_register_trainer('tr_ostad', 'hello@ostad.app', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Ostad', 'Skill Development', '01800000000');
-CALL sp_register_trainer('tr_bohubrihi', 'contact@bohubrihi.com', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Bohubrihi', 'Professional Courses', '01900000000');
-CALL sp_register_trainer('tr_creative', 'info@creativeit.com', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Creative IT Institute', 'Design & Web', '01500000000');
-CALL sp_register_trainer('tr_bitm', 'info@bitm.org.bd', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'BITM', 'Technical Training', '01700000000');
-CALL sp_register_trainer('tr_interactive', 'support@interactivecares.com', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Interactive Cares', 'Career Paths', '01300000000');
-CALL sp_register_trainer('tr_shikho', 'hr@shikho.com', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Shikho', 'Academic', '01400000000');
-CALL sp_register_trainer('tr_coders', 'support@coderstrust.com', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'CodersTrust', 'Freelancing', '01900000002');
-CALL sp_register_trainer('tr_pondit', 'info@pondit.com', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Pondit', 'Programming', '01800000002');
-CALL sp_register_trainer('tr_ghoori', 'info@ghoorilearning.com', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Ghoori Learning', 'Skills', '01700000002');
+CALL sp_register_trainer('tr_10ms', 'partners@10ms.com', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', '10 Minute School', 'General Ed', '01600000000');
+CALL sp_register_trainer('tr_ostad', 'hello@ostad.app', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Ostad', 'Skill Development', '01800000000');
+CALL sp_register_trainer('tr_bohubrihi', 'contact@bohubrihi.com', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Bohubrihi', 'Professional Courses', '01900000000');
+CALL sp_register_trainer('tr_creative', 'info@creativeit.com', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Creative IT Institute', 'Design & Web', '01500000000');
+CALL sp_register_trainer('tr_bitm', 'info@bitm.org.bd', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'BITM', 'Technical Training', '01700000000');
+CALL sp_register_trainer('tr_interactive', 'support@interactivecares.com', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Interactive Cares', 'Career Paths', '01300000000');
+CALL sp_register_trainer('tr_shikho', 'hr@shikho.com', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Shikho', 'Academic', '01400000000');
+CALL sp_register_trainer('tr_coders', 'support@coderstrust.com', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'CodersTrust', 'Freelancing', '01900000002');
+CALL sp_register_trainer('tr_pondit', 'info@pondit.com', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Pondit', 'Programming', '01800000002');
+CALL sp_register_trainer('tr_ghoori', 'info@ghoorilearning.com', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Ghoori Learning', 'Skills', '01700000002');
 
 
 -- =========================================================
--- SECTION D: REGISTER CANDIDATES (Password: 1234)
+-- SECTION D: REGISTER CANDIDATES
 -- =========================================================
 -- Seniors
-CALL sp_register_candidate('cand_tanvir', 'tanvir@gmail.com', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Tanvir', 'Ahmed', 'Mirpur', 'Dhaka', 'BD', 6);
-CALL sp_register_candidate('cand_rahim', 'rahim@sust.edu', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Rahim', 'Uddin', 'Sylhet', 'Sylhet', 'BD', 5);
-CALL sp_register_candidate('cand_karim', 'karim@gmail.com', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Karim', 'Chowdhury', 'Dhanmondi', 'Dhaka', 'BD', 8);
-CALL sp_register_candidate('cand_dipu', 'dipu@buet.ac.bd', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Dipu', 'Monwar', 'Uttara', 'Dhaka', 'BD', 4);
-CALL sp_register_candidate('cand_shakil', 'shakil@gmail.com', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Shakil', 'Khan', 'Mohammadpur', 'Dhaka', 'BD', 5);
+CALL sp_register_candidate('Roza','roza@gmail.com','$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2','Roza','Islam','Mirpur','Dhaka','BD',6);
+CALL sp_register_candidate('cand_tanvir', 'tanvir@gmail.com', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Tanvir', 'Ahmed', 'Mirpur', 'Dhaka', 'BD', 6);
+CALL sp_register_candidate('cand_rahim', 'rahim@sust.edu', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Rahim', 'Uddin', 'Sylhet', 'Sylhet', 'BD', 5);
+CALL sp_register_candidate('cand_karim', 'karim@gmail.com', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Karim', 'Chowdhury', 'Dhanmondi', 'Dhaka', 'BD', 8);
+CALL sp_register_candidate('cand_dipu', 'dipu@buet.ac.bd', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Dipu', 'Monwar', 'Uttara', 'Dhaka', 'BD', 4);
+CALL sp_register_candidate('cand_shakil', 'shakil@gmail.com', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Shakil', 'Khan', 'Mohammadpur', 'Dhaka', 'BD', 5);
 
 -- Juniors
-CALL sp_register_candidate('cand_jesmin', 'jesmin@nsu.edu', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Jesmin', 'Islam', 'Bashundhara', 'Dhaka', 'BD', 1);
-CALL sp_register_candidate('cand_mehedi', 'mehedi@ruet.ac.bd', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Mehedi', 'Hasan', 'Rajshahi', 'Rajshahi', 'BD', 2);
-CALL sp_register_candidate('cand_fahim', 'fahim@aust.edu', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Fahim', 'Faysal', 'Tejgaon', 'Dhaka', 'BD', 2);
-CALL sp_register_candidate('cand_rifat', 'rifat@aiub.edu', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Rifat', 'Dipto', 'Kuril', 'Dhaka', 'BD', 1);
-CALL sp_register_candidate('cand_sara', 'sara@bracu.ac.bd', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Sara', 'Zaman', 'Mohakhali', 'Dhaka', 'BD', 1);
+CALL sp_register_candidate('cand_jesmin', 'jesmin@nsu.edu', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Jesmin', 'Islam', 'Bashundhara', 'Dhaka', 'BD', 1);
+CALL sp_register_candidate('cand_mehedi', 'mehedi@ruet.ac.bd', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Mehedi', 'Hasan', 'Rajshahi', 'Rajshahi', 'BD', 2);
+CALL sp_register_candidate('cand_fahim', 'fahim@aust.edu', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Fahim', 'Faysal', 'Tejgaon', 'Dhaka', 'BD', 2);
+CALL sp_register_candidate('cand_rifat', 'rifat@aiub.edu', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Rifat', 'Dipto', 'Kuril', 'Dhaka', 'BD', 1);
+CALL sp_register_candidate('cand_sara', 'sara@bracu.ac.bd', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Sara', 'Zaman', 'Mohakhali', 'Dhaka', 'BD', 1);
 
 -- Business
-CALL sp_register_candidate('cand_sadia', 'sadia@gmail.com', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Sadia', 'Afrin', 'Gulshan', 'Dhaka', 'BD', 3);
-CALL sp_register_candidate('cand_kashem', 'kashem@du.ac.bd', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Abul', 'Kashem', 'Chawkbazar', 'Chittagong', 'BD', 5);
-CALL sp_register_candidate('cand_nadia', 'nadia@iub.edu.bd', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Nadia', 'Sultana', 'Bashundhara', 'Dhaka', 'BD', 2);
-CALL sp_register_candidate('cand_imran', 'imran@jnu.ac.bd', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Imran', 'Nazir', 'Old Dhaka', 'Dhaka', 'BD', 4);
-CALL sp_register_candidate('cand_tisha', 'tisha@ewu.edu.bd', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Tisha', 'Kabir', 'Aftabnagar', 'Dhaka', 'BD', 2);
+CALL sp_register_candidate('cand_sadia', 'sadia@gmail.com', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Sadia', 'Afrin', 'Gulshan', 'Dhaka', 'BD', 3);
+CALL sp_register_candidate('cand_kashem', 'kashem@du.ac.bd', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Abul', 'Kashem', 'Chawkbazar', 'Chittagong', 'BD', 5);
+CALL sp_register_candidate('cand_nadia', 'nadia@iub.edu.bd', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Nadia', 'Sultana', 'Bashundhara', 'Dhaka', 'BD', 2);
+CALL sp_register_candidate('cand_imran', 'imran@jnu.ac.bd', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Imran', 'Nazir', 'Old Dhaka', 'Dhaka', 'BD', 4);
+CALL sp_register_candidate('cand_tisha', 'tisha@ewu.edu.bd', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Tisha', 'Kabir', 'Aftabnagar', 'Dhaka', 'BD', 2);
 
 -- Creative
-CALL sp_register_candidate('cand_nusrat', 'nusrat@gmail.com', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Nusrat', 'Jahan', 'Uttara', 'Dhaka', 'BD', 3);
-CALL sp_register_candidate('cand_biplob', 'biplob@art.com', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Biplob', 'Saha', 'Shahbag', 'Dhaka', 'BD', 5);
-CALL sp_register_candidate('cand_lamia', 'lamia@content.com', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Lamia', 'Rahman', 'Banani', 'Dhaka', 'BD', 2);
-CALL sp_register_candidate('cand_zara', 'zara@ux.com', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Zara', 'Khan', 'Dhanmondi', 'Dhaka', 'BD', 4);
-CALL sp_register_candidate('cand_rafiq', 'rafiq@video.com', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Rafiq', 'Islam', 'Mirpur', 'Dhaka', 'BD', 3);
+CALL sp_register_candidate('cand_nusrat', 'nusrat@gmail.com', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Nusrat', 'Jahan', 'Uttara', 'Dhaka', 'BD', 3);
+CALL sp_register_candidate('cand_biplob', 'biplob@art.com', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Biplob', 'Saha', 'Shahbag', 'Dhaka', 'BD', 5);
+CALL sp_register_candidate('cand_lamia', 'lamia@content.com', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Lamia', 'Rahman', 'Banani', 'Dhaka', 'BD', 2);
+CALL sp_register_candidate('cand_zara', 'zara@ux.com', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Zara', 'Khan', 'Dhanmondi', 'Dhaka', 'BD', 4);
+CALL sp_register_candidate('cand_rafiq', 'rafiq@video.com', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Rafiq', 'Islam', 'Mirpur', 'Dhaka', 'BD', 3);
 
 -- Freshers
-CALL sp_register_candidate('cand_akib', 'akib@nsu.edu', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Akib', 'Zaman', 'Bashundhara', 'Dhaka', 'BD', 0);
-CALL sp_register_candidate('cand_mou', 'mou@du.ac.bd', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Mou', 'Akter', 'Azimpur', 'Dhaka', 'BD', 0);
-CALL sp_register_candidate('cand_prottoy', 'prottoy@aiub.edu', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Prottoy', 'Roy', 'Kuril', 'Dhaka', 'BD', 0);
-CALL sp_register_candidate('cand_samia', 'samia@bracu.ac.bd', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Samia', 'Haque', 'Mogbazar', 'Dhaka', 'BD', 0);
-CALL sp_register_candidate('cand_joy', 'joy@diu.edu.bd', '$2a$10$X0Zyd7/Czk/IuQ8/zdnPeO4wUnOP4/lFfC5Vkb0ciRyym9O5MPjeq', 'Joy', 'Sarkar', 'Dhanmondi', 'Dhaka', 'BD', 0);
+CALL sp_register_candidate('cand_akib', 'akib@nsu.edu', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Akib', 'Zaman', 'Bashundhara', 'Dhaka', 'BD', 0);
+CALL sp_register_candidate('cand_mou', 'mou@du.ac.bd', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Mou', 'Akter', 'Azimpur', 'Dhaka', 'BD', 0);
+CALL sp_register_candidate('cand_prottoy', 'prottoy@aiub.edu', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Prottoy', 'Roy', 'Kuril', 'Dhaka', 'BD', 0);
+CALL sp_register_candidate('cand_samia', 'samia@bracu.ac.bd', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Samia', 'Haque', 'Mogbazar', 'Dhaka', 'BD', 0);
+CALL sp_register_candidate('cand_joy', 'joy@diu.edu.bd', '$2a$10$0Rdo7UKbsYovK./tWrwxSetGtLMSPySivGZgZr8rdsClYZ6Yhfpo2', 'Joy', 'Sarkar', 'Dhanmondi', 'Dhaka', 'BD', 0);
 
 
 -- =========================================================

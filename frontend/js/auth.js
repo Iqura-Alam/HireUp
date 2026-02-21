@@ -38,6 +38,12 @@ async function register(event) {
     const errorDiv = document.getElementById('error-message');
     errorDiv.textContent = '';
 
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{6,}$/;
+    if (!passwordRegex.test(password)) {
+        errorDiv.textContent = 'Password must be at least 6 characters long and include an alphanumeric character and a number.';
+        return;
+    }
+
     try {
         const response = await fetch(`${API_URL}/register`, {
             method: 'POST',
