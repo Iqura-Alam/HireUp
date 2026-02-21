@@ -99,7 +99,7 @@ exports.getJobApplications = async (req, res) => {
         const result = await pool.query(`
             SELECT a.application_id, a.status, a.applied_at,
                    u.email, u.username,
-                   cp.candidate_id, cp.first_name, cp.last_name, cp.full_name, cp.resume_url, cp.experience_years,
+                   cp.candidate_id, cp.first_name, cp.last_name, cp.full_name, cp.experience_years,
                    (
                        SELECT jsonb_agg(
                            jsonb_build_object(

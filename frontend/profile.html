@@ -122,7 +122,8 @@
                 HireUp</h2>
         </div>
         <div>
-            <button onclick="window.history.back()" class="btn"
+            <button onclick="if(window.history.length > 1) { window.history.back(); } else { window.close(); }"
+                class="btn"
                 style="background: transparent; border: 1px solid var(--text-muted); width: auto; padding: 0.5rem 1rem;">Back</button>
         </div>
     </nav>

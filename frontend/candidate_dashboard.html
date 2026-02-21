@@ -87,6 +87,9 @@
                     <p><strong style="color: var(--text-muted);">Headline</strong><br> <span
                             id="profile-headline">...</span></p>
                     <div style="height: 0.5rem;"></div>
+                    <p><strong style="color: var(--text-muted);">Summary</strong><br> <span id="profile-summary"
+                            style="font-size: 0.9rem; color: var(--text-muted);">...</span></p>
+                    <div style="height: 0.5rem;"></div>
                     <p><strong style="color: var(--text-muted);">Email</strong><br> <span id="profile-email">...</span>
                     </p>
                     <div style="height: 0.5rem;"></div>
@@ -103,7 +106,33 @@
                         <!-- Social Links -->
                         <a id="link-linkedin" href="#" target="_blank" style="display: none;">LinkedIn</a>
                         <a id="link-github" href="#" target="_blank" style="display: none;">GitHub</a>
-                        <a id="link-portfolio" href="#" target="_blank" style="display: none;">Portfolio</a>
+                    </div>
+                </div>
+
+                <!-- Job Preferences Widget -->
+                <div class="card" style="margin-top: 2rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0;">
+                            <span style="font-size: 1.2rem;">🎯</span> Job Preferences
+                        </h3>
+                        <button onclick="openEditPreferencesModal()" class="btn"
+                            style="width: auto; padding: 0.25rem 0.75rem; font-size: 0.8rem;">Edit</button>
+                    </div>
+
+                    <div style="font-size: 0.9rem; line-height: 1.6;">
+                        <p><strong style="color: var(--text-muted);">Desired Role:</strong> <span id="pref-role">Not
+                                specified</span></p>
+                        <p><strong style="color: var(--text-muted);">Employment Type:</strong> <span id="pref-type">Not
+                                specified</span></p>
+                        <p><strong style="color: var(--text-muted);">Work Mode:</strong> <span id="pref-mode">Not
+                                specified</span></p>
+                        <p><strong style="color: var(--text-muted);">Expected Salary:</strong> <span
+                                id="pref-salary">Not specified</span></p>
+                        <p><strong style="color: var(--text-muted);">Notice Period:</strong> <span id="pref-notice">Not
+                                specified</span></p>
+                        <p><strong style="color: var(--text-muted);">Willing to Relocate:</strong> <span
+                                id="pref-relocate">Not specified</span></p>
                     </div>
                 </div>
 
@@ -225,11 +254,15 @@
                 </div>
                 <!-- Extra fields -->
                 <div class="form-row">
-                    <div class="form-group">
+                    <div class="form-group" style="flex: 1;">
                         <label>City</label>
                         <input type="text" id="edit-city">
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" style="flex: 1;">
+                        <label>Division</label>
+                        <input type="text" id="edit-division">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
                         <label>Country</label>
                         <input type="text" id="edit-country">
                     </div>
@@ -255,9 +288,6 @@
                 <div class="form-group">
                     <input type="text" id="edit-github" placeholder="GitHub URL">
                 </div>
-                <div class="form-group">
-                    <input type="text" id="edit-portfolio" placeholder="Portfolio URL">
-                </div>
 
                 <div class="modal-actions" style="justify-content: space-between;">
                     <button type="button" onclick="deleteAccount()" class="btn"
@@ -267,6 +297,76 @@
                         <button type="button" class="btn btn-secondary"
                             onclick="closeModal('modal-profile')">Cancel</button>
                         <button type="submit" class="btn">Save Changes</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Preferences Modal -->
+    <div id="modal-preferences" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Job Preferences</h3>
+                <span class="close-modal" onclick="closeModal('modal-preferences')">&times;</span>
+            </div>
+            <form onsubmit="savePreferences(event)">
+                <div class="form-group">
+                    <label>Desired Job Title</label>
+                    <input type="text" id="edit-pref-title" placeholder="e.g. Frontend Developer">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Employment Type</label>
+                        <select id="edit-pref-type">
+                            <option value="">Any</option>
+                            <option value="Full-time">Full-time</option>
+                            <option value="Part-time">Part-time</option>
+                            <option value="Contract">Contract</option>
+                            <option value="Internship">Internship</option>
+                            <option value="Freelance">Freelance</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Work Mode</label>
+                        <select id="edit-pref-mode">
+                            <option value="">Any</option>
+                            <option value="On-site">On-site</option>
+                            <option value="Remote">Remote</option>
+                            <option value="Hybrid">Hybrid</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Expected Salary Min</label>
+                        <input type="number" id="edit-pref-sal-min" placeholder="e.g. 50000" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Expected Salary Max</label>
+                        <input type="number" id="edit-pref-sal-max" placeholder="e.g. 80000" min="0">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Notice Period (Days)</label>
+                    <input type="number" id="edit-pref-notice" placeholder="e.g. 30" min="0" max="365">
+                </div>
+
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: normal;">
+                        <input type="checkbox" id="edit-pref-relocate" style="width: auto;">
+                        I am willing to relocate
+                    </label>
+                </div>
+
+                <div class="modal-actions" style="justify-content: flex-end;">
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="button" class="btn btn-secondary"
+                            onclick="closeModal('modal-preferences')">Cancel</button>
+                        <button type="submit" class="btn">Save Preferences</button>
                     </div>
                 </div>
             </form>

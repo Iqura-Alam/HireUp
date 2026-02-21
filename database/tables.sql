@@ -60,17 +60,12 @@ CREATE TABLE IF NOT EXISTS candidate_profile (
 
   headline         VARCHAR(150),
   summary          TEXT,
-  dob              DATE,
-  gender           VARCHAR(10), --(Male/Female/Other)
   
   -- 2. Localized Address & Contact
   contact_number   VARCHAR(30), 
-  street_address   VARCHAR(255), 
   city             VARCHAR(100), 
   division         VARCHAR(50),  
-  zip_code         VARCHAR(10),  
   country          VARCHAR(100) DEFAULT 'Bangladesh',
-  timezone         VARCHAR(50) DEFAULT 'Asia/Dhaka',
   
   -- 3. Job Preferences
   desired_job_title VARCHAR(100),
@@ -85,9 +80,6 @@ CREATE TABLE IF NOT EXISTS candidate_profile (
   -- 4. Professional Links
   linkedin_url      VARCHAR(200),
   github_url        VARCHAR(200),
-  portfolio_url     VARCHAR(200),
-  resume_url        VARCHAR(200),
-  resume_updated_at TIMESTAMPTZ,
   
   experience_years INT CHECK (experience_years >= 0),
   
