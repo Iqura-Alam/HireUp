@@ -244,37 +244,52 @@
                 const res = await fetch(`${API_CANDIDATE}/course-filters`, {
                     headers: { 'x-auth-token': localStorage.getItem('token') }
                 });
+
+                if (!res.ok) throw new Error('Failed to load filters');
+
                 const { skills, trainers } = await res.json();
 
                 const skillSelect = document.getElementById('filter-skill');
                 const trainerSelect = document.getElementById('filter-trainer');
 
-                skills.forEach(skill => {
-                    const opt = document.createElement('option');
-                    opt.value = skill;
-                    opt.textContent = skill;
-                    skillSelect.appendChild(opt);
-                });
+                if (skills && skills.length > 0) {
+                    skills.forEach(skill => {
+                        const opt = document.createElement('option');
+                        opt.value = skill;
+                        opt.textContent = skill;
+                        skillSelect.appendChild(opt);
+                    });
+                } else {
+                    console.warn('No skills found for filter');
+                }
 
-                trainers.forEach(trainer => {
-                    const opt = document.createElement('option');
-                    opt.value = trainer;
-                    opt.textContent = trainer;
-                    trainerSelect.appendChild(opt);
-                });
+                if (trainers && trainers.length > 0) {
+                    trainers.forEach(trainer => {
+                        const opt = document.createElement('option');
+                        opt.value = trainer;
+                        opt.textContent = trainer;
+                        trainerSelect.appendChild(opt);
+                    });
+                }
 
-                // Initialize TomSelect for skills
+                // Initialize TomSelect for skills (Ensure it initializes even with empty list)
                 skillSelectInstance = new TomSelect('#filter-skill', {
                     plugins: ['remove_button'],
                     onItemAdd: function () { this.setTextboxValue(''); this.refreshOptions(); },
                     persist: false,
                     create: false,
                     allowEmptyOption: true,
-                    placeholder: "Search skills..."
+                    placeholder: skills && skills.length > 0 ? "Search skills..." : "No skills available"
                 });
 
             } catch (err) {
                 console.error('Error loading filter options:', err);
+                // Initialize anyway to avoid breaking UI
+                if (!skillSelectInstance) {
+                    skillSelectInstance = new TomSelect('#filter-skill', {
+                        placeholder: "Error loading skills"
+                    });
+                }
             }
         }
 

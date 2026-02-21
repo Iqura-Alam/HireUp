@@ -7,49 +7,299 @@
     <title>HireUp - Admin Dashboard</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
-        .section {
-            margin-bottom: 2rem;
+        :root {
+            --sidebar-width: 260px;
         }
 
+        body {
+            display: flex;
+            /* Sidebar layout */
+            overflow-x: hidden;
+            background-color: var(--bg-color);
+            background-image: var(--bg-mesh);
+            background-attachment: fixed;
+            background-size: cover;
+            color: var(--text-main);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Sidebar Glassmorphism */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-right: 1px solid var(--glass-border);
+            padding: 2.5rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 4rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 0.05em;
+        }
+
+        .nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .nav-link {
+            padding: 1rem 1.25rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-weight: 500;
+            border: 1px solid transparent;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            transform: translateX(8px);
+        }
+
+        .nav-link.active {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Main Content area */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 2.5rem 4rem;
+            max-width: calc(100vw - var(--sidebar-width));
+        }
+
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            padding: 1.25rem 2rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        .view-section {
+            display: none;
+            animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: var(--glass-shadow);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.25rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        /* Tables override for Dark Theme */
         table {
             width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-        }
-
-        th,
-        td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
+            border-collapse: separate;
+            border-spacing: 0 0.75rem;
         }
 
         th {
-            background-color: #f2f2f2;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.15em;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 1.5rem 1rem;
+            color: #f1f5f9;
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        td:first-child {
+            border-radius: 16px 0 0 16px;
+            border-left: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        td:last-child {
+            border-radius: 0 16px 16px 0;
+            border-right: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.07);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-logout {
+            width: auto;
+            padding: 0.6rem 1.5rem;
+            font-size: 0.9rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            font-weight: 600;
+            border-radius: 10px;
+        }
+
+        .btn-logout:hover {
+            background: #ef4444;
+            color: white;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 2.5rem;
+        }
+
+        select {
+            background: #1e293b;
+            border: 1px solid var(--glass-border);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            font-family: inherit;
+        }
+
+        .btn-approve-all {
+            background: #10b981;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        }
+
+        .btn-approve-all:hover {
+            background: #059669;
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <div class="nav" style="display: flex; justify-content: space-between; align-items: center;">
-            <h2>Admin Dashboard</h2>
-            <button onclick="logout()">Logout</button>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            HIREUP ADMIN
+        </div>
+        <div class="nav-links">
+            <div class="nav-link active" onclick="showView('overview', this)">
+                <span class="icon">📊</span> Overview
+            </div>
+            <div class="nav-link" onclick="showView('verification', this)">
+                <span class="icon">🛡️</span> Verification
+            </div>
+            <div class="nav-link" onclick="showView('users', this)">
+                <span class="icon">👥</span> Users
+            </div>
+            <div class="nav-link" onclick="showView('audit', this)">
+                <span class="icon">📜</span> Audit Logs
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-nav">
+            <h2 id="view-title" style="margin:0; font-family: 'Outfit';">Dashboard Overview</h2>
+            <button class="btn-logout" onclick="logout()">Logout</button>
         </div>
 
-        <div class="section">
-            <h3>Top Skills (By Demand)</h3>
-            <div id="top-skills-list">Loading...</div>
+        <!-- Overview View -->
+        <div id="view-overview" class="view-section active">
+            <div class="stats-grid">
+                <div class="glass-panel">
+                    <h3 style="margin-bottom: 2rem; color: #a855f7;">Top Skills Demand</h3>
+                    <div id="top-skills-list">Loading...</div>
+                </div>
+                <div class="glass-panel">
+                    <h3 style="margin-bottom: 2rem; color: #6366f1;">Popular Courses</h3>
+                    <div id="popular-courses-list">Loading...</div>
+                </div>
+            </div>
         </div>
 
-        <div class="section">
-            <h3>Popular Courses</h3>
-            <div id="popular-courses-list">Loading...</div>
+        <!-- Verification View -->
+        <div id="view-verification" class="view-section">
+            <div class="glass-panel">
+                <div class="section-header">
+                    <h3 style="margin: 0;">Verification Queue</h3>
+                    <button id="btn-approve-all" onclick="verifyAllUsers()" class="btn btn-approve-all"
+                        style="width: auto; padding: 0.6rem 1.5rem; display: none; font-size: 0.9rem;">Approve All
+                        Accounts</button>
+                </div>
+                <div id="verification-queue-list">Loading...</div>
+            </div>
         </div>
 
-        <div class="section">
-            <h3>System Audit Logs</h3>
-            <div id="audit-logs-list">Loading...</div>
+        <!-- User Management View -->
+        <div id="view-users" class="view-section">
+            <div class="glass-panel">
+                <div class="section-header">
+                    <h3 style="margin: 0;">User Access Control</h3>
+                </div>
+                <div id="user-management-list">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Audit Logs View -->
+        <div id="view-audit" class="view-section">
+            <div class="glass-panel">
+                <div class="section-header">
+                    <h3 style="margin: 0;">Security & Audit Logs</h3>
+                </div>
+                <div id="audit-logs-list">Loading...</div>
+            </div>
         </div>
     </div>
 

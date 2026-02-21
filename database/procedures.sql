@@ -171,8 +171,7 @@ CREATE OR REPLACE PROCEDURE sp_update_candidate_profile(
     p_contact_number VARCHAR DEFAULT NULL,
     p_experience_years INT DEFAULT NULL,
     p_linkedin_url VARCHAR DEFAULT NULL,
-    p_github_url VARCHAR DEFAULT NULL,
-    p_portfolio_url VARCHAR DEFAULT NULL
+    p_github_url VARCHAR DEFAULT NULL
 )
 LANGUAGE plpgsql
 AS $$
@@ -188,7 +187,34 @@ BEGIN
         experience_years = COALESCE(p_experience_years, experience_years),
         linkedin_url = COALESCE(p_linkedin_url, linkedin_url),
         github_url = COALESCE(p_github_url, github_url),
-        portfolio_url = COALESCE(p_portfolio_url, portfolio_url),
+        updated_at = now()
+    WHERE candidate_id = p_candidate_id;
+END;
+$$;
+
+-- 1a. Update Candidate Job Preferences
+CREATE OR REPLACE PROCEDURE sp_update_candidate_preferences(
+    p_candidate_id BIGINT,
+    p_desired_job_title VARCHAR DEFAULT NULL,
+    p_employment_type VARCHAR DEFAULT NULL,
+    p_work_mode_preference VARCHAR DEFAULT NULL,
+    p_expected_salary_min DECIMAL DEFAULT NULL,
+    p_expected_salary_max DECIMAL DEFAULT NULL,
+    p_notice_period_days INT DEFAULT NULL,
+    p_willing_to_relocate BOOLEAN DEFAULT NULL
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    UPDATE candidate_profile
+    SET 
+        desired_job_title = COALESCE(p_desired_job_title, desired_job_title),
+        employment_type = COALESCE(p_employment_type, employment_type),
+        work_mode_preference = COALESCE(p_work_mode_preference, work_mode_preference),
+        expected_salary_min = COALESCE(p_expected_salary_min, expected_salary_min),
+        expected_salary_max = COALESCE(p_expected_salary_max, expected_salary_max),
+        notice_period_days = COALESCE(p_notice_period_days, notice_period_days),
+        willing_to_relocate = COALESCE(p_willing_to_relocate, willing_to_relocate),
         updated_at = now()
     WHERE candidate_id = p_candidate_id;
 END;

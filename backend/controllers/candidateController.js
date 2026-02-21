@@ -249,7 +249,7 @@ exports.getPublicProfile = async (req, res) => {
 };
 
 exports.updateProfileDetails = async (req, res) => {
-    const { headline, summary, city, division, country, contact_number, experience_years, linkedin_url, github_url, portfolio_url } = req.body;
+    const { headline, summary, city, division, country, contact_number, experience_years, linkedin_url, github_url } = req.body;
     const candidateId = req.user.id;
 
     // Sanitize numeric fields: PostgreSQL INT doesn't like empty strings
@@ -257,10 +257,31 @@ exports.updateProfileDetails = async (req, res) => {
 
     try {
         await pool.query(
-            'CALL sp_update_candidate_profile($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)',
-            [candidateId, headline, summary, city, division, country, contact_number, sanitizedExpYears, linkedin_url, github_url, portfolio_url]
+            'CALL sp_update_candidate_profile($1::BIGINT, $2::VARCHAR, $3::TEXT, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, $7::VARCHAR, $8::INT, $9::VARCHAR, $10::VARCHAR)',
+            [candidateId, headline, summary, city, division, country, contact_number, sanitizedExpYears, linkedin_url, github_url]
         );
         res.json({ message: 'Profile updated successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+exports.updateJobPreferences = async (req, res) => {
+    const { desired_job_title, employment_type, work_mode_preference, expected_salary_min, expected_salary_max, notice_period_days, willing_to_relocate } = req.body;
+    const candidateId = req.user.id;
+
+    const sanitizedMin = (expected_salary_min === '' || expected_salary_min === undefined) ? null : expected_salary_min;
+    const sanitizedMax = (expected_salary_max === '' || expected_salary_max === undefined) ? null : expected_salary_max;
+    const sanitizedNotice = (notice_period_days === '' || notice_period_days === undefined) ? null : notice_period_days;
+    const sanitizedRelocate = (willing_to_relocate === '' || willing_to_relocate === undefined) ? null : (willing_to_relocate === 'true' || willing_to_relocate === true);
+
+    try {
+        await pool.query(
+            'CALL sp_update_candidate_preferences($1, $2, $3, $4, $5, $6, $7, $8)',
+            [candidateId, desired_job_title, employment_type, work_mode_preference, sanitizedMin, sanitizedMax, sanitizedNotice, sanitizedRelocate]
+        );
+        res.json({ message: 'Job preferences updated successfully' });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server Error' });
@@ -494,12 +515,11 @@ exports.getRecommendedCourses = async (req, res) => {
 
 exports.getCourseFilters = async (req, res) => {
     try {
-        // Get unique skills taught in all available courses
+        // Get ALL available skills for the filter
         const skillsQuery = await pool.query(`
-            SELECT DISTINCT s.skill_name 
-            FROM course_skill cs
-            JOIN skill s ON s.skill_id = cs.skill_id
-            ORDER BY s.skill_name ASC
+            SELECT DISTINCT skill_name 
+            FROM skill 
+            ORDER BY skill_name ASC
         `);
 
         // Get unique trainer organizations

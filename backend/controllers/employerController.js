@@ -47,8 +47,15 @@ exports.updateProfile = async (req, res) => {
 exports.postJob = async (req, res) => {
     try {
         const userId = req.user.id;
-        const employerId = await getEmployerId(userId);
-        if (!employerId) return res.status(404).json({ message: 'Employer not found' });
+        // Verify Employer is approved
+        const employerCheck = await pool.query('SELECT employer_id, is_verified FROM employer WHERE user_id = $1', [userId]);
+        if (employerCheck.rows.length === 0) return res.status(404).json({ message: 'Employer not found' });
+
+        const { employer_id: employerId, is_verified } = employerCheck.rows[0];
+
+        if (!is_verified) {
+            return res.status(403).json({ message: 'Your account is pending admin verification. You cannot post jobs yet.' });
+        }
 
         const { title, description, location, salary_range, expires_at, skill_ids, min_proficiencies, questions } = req.body;
 
@@ -99,7 +106,7 @@ exports.getJobApplications = async (req, res) => {
         const result = await pool.query(`
             SELECT a.application_id, a.status, a.applied_at,
                    u.email, u.username,
-                   cp.candidate_id, cp.first_name, cp.last_name, cp.full_name, cp.resume_url, cp.experience_years,
+                   cp.candidate_id, cp.first_name, cp.last_name, cp.full_name, cp.experience_years,
                    (
                        SELECT jsonb_agg(
                            jsonb_build_object(

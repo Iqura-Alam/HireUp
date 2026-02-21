@@ -5,6 +5,10 @@ const auth = require('../middleware/authMiddleware');
 
 router.get('/profile', auth, employerController.getProfile);
 router.put('/profile', auth, employerController.updateProfile);
+
+const authController = require('../controllers/authController');
+router.delete('/profile', auth, authController.deleteAccount);
+
 router.get('/public/:id', auth, employerController.getPublicEmployerProfile);
 
 router.post('/jobs', auth, employerController.postJob);

@@ -39,13 +39,10 @@ CREATE TABLE IF NOT EXISTS users (
   
   -- Account Status & Health
   is_active        BOOLEAN NOT NULL DEFAULT TRUE,
-  email_verified_at TIMESTAMPTZ,
+  email_verified_at TIMESTAMPTZ DEFAULT now(),
   last_login_at    TIMESTAMPTZ,
-  password_reset_token_hash VARCHAR(255),
-  password_reset_expires_at TIMESTAMPTZ,
   
   -- Profile / Soft Delete
-  avatar_url       VARCHAR(255),
   deleted_at       TIMESTAMPTZ,
   
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -63,17 +60,12 @@ CREATE TABLE IF NOT EXISTS candidate_profile (
 
   headline         VARCHAR(150),
   summary          TEXT,
-  dob              DATE,
-  gender           VARCHAR(10), --(Male/Female/Other)
   
   -- 2. Localized Address & Contact
   contact_number   VARCHAR(30), 
-  street_address   VARCHAR(255), 
   city             VARCHAR(100), 
   division         VARCHAR(50),  
-  zip_code         VARCHAR(10),  
   country          VARCHAR(100) DEFAULT 'Bangladesh',
-  timezone         VARCHAR(50) DEFAULT 'Asia/Dhaka',
   
   -- 3. Job Preferences
   desired_job_title VARCHAR(100),
@@ -88,9 +80,6 @@ CREATE TABLE IF NOT EXISTS candidate_profile (
   -- 4. Professional Links
   linkedin_url      VARCHAR(200),
   github_url        VARCHAR(200),
-  portfolio_url     VARCHAR(200),
-  resume_url        VARCHAR(200),
-  resume_updated_at TIMESTAMPTZ,
   
   experience_years INT CHECK (experience_years >= 0),
   
@@ -206,6 +195,7 @@ CREATE TABLE IF NOT EXISTS employer (
   contact_number   VARCHAR(30),
   email            VARCHAR(120),
   website          VARCHAR(200),
+  is_verified      BOOLEAN NOT NULL DEFAULT FALSE,
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   CONSTRAINT uq_employer_company UNIQUE (company_name)
@@ -283,6 +273,7 @@ CREATE TABLE IF NOT EXISTS trainer_profile (
   organization_name VARCHAR(150),
   specialization  VARCHAR(100),
   contact_number  VARCHAR(30),
+  is_verified     BOOLEAN NOT NULL DEFAULT FALSE,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
   CONSTRAINT uq_trainer_user UNIQUE (user_id)

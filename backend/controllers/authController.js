@@ -16,6 +16,11 @@ exports.register = async (req, res) => {
             return res.status(400).json({ message: 'Please fill all required fields' });
         }
 
+        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{6,}$/;
+        if (!passwordRegex.test(password)) {
+            return res.status(400).json({ message: 'Password must be at least 6 characters long and include at least one letter and one number.' });
+        }
+
         // Hash password
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
@@ -117,11 +122,28 @@ exports.login = async (req, res) => {
 
         const user = userResult.rows[0];
 
+        // Check if account is active
+        if (user.is_active === false) {
+            if (user.deleted_at) {
+                return res.status(403).json({ message: 'Account deleted. Please contact support.' });
+            }
+            if (user.account_status === 'Suspended') {
+                return res.status(403).json({ message: 'Your account is temporarily suspended. Please contact support.' });
+            }
+            if (user.account_status === 'Banned') {
+                return res.status(403).json({ message: 'Your account has been permanently banned due to policy violations.' });
+            }
+            return res.status(403).json({ message: 'Account deactivated. Please contact support.' });
+        }
+
         //  Validate Password
         const isMatch = await bcrypt.compare(password, user.password_hash);
         if (!isMatch) {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
+
+        // Update last_login_at
+        await pool.query('UPDATE users SET last_login_at = NOW() WHERE user_id = $1', [user.user_id]);
 
         // 3. Create JWT Token
         const payload = {
@@ -144,5 +166,16 @@ exports.login = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+exports.deleteAccount = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        await pool.query('UPDATE users SET deleted_at = NOW(), is_active = FALSE WHERE user_id = $1', [userId]);
+        res.json({ message: 'Account deleted successfully' });
+    } catch (error) {
+        console.error('Delete Account Error:', error);
+        res.status(500).json({ message: 'Server Error', error: error.message });
     }
 };

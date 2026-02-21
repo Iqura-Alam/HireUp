@@ -82,11 +82,16 @@ exports.addCourse = async (req, res) => {
     const userId = req.user.id;
 
     try {
-        const trainerRes = await pool.query('SELECT trainer_id FROM trainer_profile WHERE user_id = $1', [userId]);
+        const trainerRes = await pool.query('SELECT trainer_id, is_verified FROM trainer_profile WHERE user_id = $1', [userId]);
         if (trainerRes.rows.length === 0) {
             return res.status(404).json({ message: 'Trainer profile not found' });
         }
-        const trainerId = trainerRes.rows[0].trainer_id;
+
+        const { trainer_id: trainerId, is_verified } = trainerRes.rows[0];
+
+        if (!is_verified) {
+            return res.status(403).json({ message: 'Your account is pending admin verification. You cannot create courses yet.' });
+        }
 
         await pool.query(
             'CALL sp_add_course($1, $2, $3, $4, $5, $6, $7)',

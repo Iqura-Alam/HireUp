@@ -26,6 +26,10 @@ router.post('/skill', auth, candidateController.addSkill);
 // Dashboard & Profile Management
 router.get('/dashboard-context', auth, candidateController.getDashboardContext);
 router.put('/profile-details', auth, candidateController.updateProfileDetails);
+router.put('/job-preferences', auth, candidateController.updateJobPreferences);
+
+const authController = require('../controllers/authController');
+router.delete('/profile', auth, authController.deleteAccount);
 
 router.post('/experience', auth, candidateController.manageExperience);
 router.delete('/experience/:id', auth, candidateController.deleteExperience);

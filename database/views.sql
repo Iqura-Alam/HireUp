@@ -65,13 +65,26 @@ SELECT
   u.email,
   u.role,
   c.full_name,
-  c.dob,
+  c.headline,
+  c.summary,
   c.city,
   c.division,
   c.country,
   c.experience_years,
   c.contact_number,
+  c.linkedin_url,
+  c.github_url,
   c.completion_percentage,
+
+  -- Job Preferences
+  c.desired_job_title,
+  c.employment_type,
+  c.work_mode_preference,
+  c.expected_salary_min,
+  c.expected_salary_max,
+  c.currency,
+  c.notice_period_days,
+  c.willing_to_relocate,
   
   -- Aggregated Skills
   COALESCE(

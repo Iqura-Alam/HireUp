@@ -70,10 +70,53 @@ function renderDashboard(data) {
         document.getElementById('profile-name').textContent = profile.full_name || 'Your Name';
         document.getElementById('profile-email').textContent = profile.email || '';
         document.getElementById('profile-headline').textContent = profile.headline || 'Add a headline...';
-        const loc = [profile.city, profile.country].filter(Boolean).join(', ');
+
+        // Render Summary if it exists
+        const summaryEl = document.getElementById('profile-summary');
+        if (summaryEl) {
+            summaryEl.textContent = profile.summary || 'No summary provided.';
+        }
+
+        // Smart Location Rendering: Show (City, Division) or (City, Country)
+        let loc = '';
+        if (profile.city && profile.division) {
+            loc = `${profile.city}, ${profile.division}`;
+        } else {
+            loc = [profile.city, profile.country].filter(Boolean).join(', ');
+        }
         document.getElementById('profile-location').textContent = loc || 'Add location...';
         document.getElementById('profile-contact').textContent = profile.contact_number || 'Add contact...';
         document.getElementById('profile-experience').textContent = profile.experience_years !== null ? profile.experience_years : '0';
+
+        // Social Links
+        const lnkLI = document.getElementById('link-linkedin');
+        const lnkGH = document.getElementById('link-github');
+
+        if (profile.linkedin_url) {
+            lnkLI.href = profile.linkedin_url;
+            lnkLI.style.display = 'inline-block';
+        } else { lnkLI.style.display = 'none'; }
+
+        if (profile.github_url) {
+            lnkGH.href = profile.github_url;
+            lnkGH.style.display = 'inline-block';
+        } else { lnkGH.style.display = 'none'; }
+
+        // Job Preferences
+        document.getElementById('pref-role').textContent = profile.desired_job_title || 'Not specified';
+        document.getElementById('pref-type').textContent = profile.employment_type || 'Not specified';
+        document.getElementById('pref-mode').textContent = profile.work_mode_preference || 'Not specified';
+
+        let salaryText = 'Not specified';
+        if (profile.expected_salary_min || profile.expected_salary_max) {
+            const currency = profile.currency || 'BDT';
+            const min = profile.expected_salary_min || '0';
+            const max = profile.expected_salary_max || 'Any';
+            salaryText = `${currency} ${min} - ${max}`;
+        }
+        document.getElementById('pref-salary').textContent = salaryText;
+        document.getElementById('pref-notice').textContent = profile.notice_period_days !== null ? `${profile.notice_period_days} Days` : 'Not specified';
+        document.getElementById('pref-relocate').textContent = profile.willing_to_relocate === true ? 'Yes' : (profile.willing_to_relocate === false ? 'No' : 'Not specified');
 
         const nameForAvatar = profile.first_name || (profile.full_name ? profile.full_name.split(' ')[0] : 'U');
         document.getElementById('avatar-initial').textContent = nameForAvatar.charAt(0).toUpperCase();
@@ -175,12 +218,12 @@ function openEditProfileModal() {
     document.getElementById('edit-headline').value = currentProfile.headline || '';
     document.getElementById('edit-summary').value = currentProfile.summary || '';
     document.getElementById('edit-city').value = currentProfile.city || '';
+    document.getElementById('edit-division').value = currentProfile.division || '';
     document.getElementById('edit-country').value = currentProfile.country || '';
     document.getElementById('edit-contact').value = currentProfile.contact_number || '';
     document.getElementById('edit-exp-years').value = currentProfile.experience_years || '';
     document.getElementById('edit-linkedin').value = currentProfile.linkedin_url || '';
     document.getElementById('edit-github').value = currentProfile.github_url || '';
-    document.getElementById('edit-portfolio').value = currentProfile.portfolio_url || '';
     document.getElementById('modal-profile').classList.remove('hidden');
 }
 
@@ -191,12 +234,12 @@ async function saveProfileDetails(e) {
         headline: document.getElementById('edit-headline').value,
         summary: document.getElementById('edit-summary').value,
         city: document.getElementById('edit-city').value,
+        division: document.getElementById('edit-division').value,
         country: document.getElementById('edit-country').value,
         contact_number: document.getElementById('edit-contact').value,
         experience_years: document.getElementById('edit-exp-years').value,
         linkedin_url: document.getElementById('edit-linkedin').value,
-        github_url: document.getElementById('edit-github').value,
-        portfolio_url: document.getElementById('edit-portfolio').value
+        github_url: document.getElementById('edit-github').value
     };
 
     try {
@@ -210,6 +253,51 @@ async function saveProfileDetails(e) {
             loadDashboardData();
         } else { alert('Failed to save'); }
     } catch (e) { console.error(e); }
+}
+
+function openEditPreferencesModal() {
+    if (!currentProfile) return;
+    document.getElementById('edit-pref-title').value = currentProfile.desired_job_title || '';
+    document.getElementById('edit-pref-type').value = currentProfile.employment_type || '';
+    document.getElementById('edit-pref-mode').value = currentProfile.work_mode_preference || '';
+    document.getElementById('edit-pref-sal-min').value = currentProfile.expected_salary_min || '';
+    document.getElementById('edit-pref-sal-max').value = currentProfile.expected_salary_max || '';
+    document.getElementById('edit-pref-notice').value = currentProfile.notice_period_days !== null ? currentProfile.notice_period_days : '';
+    document.getElementById('edit-pref-relocate').checked = currentProfile.willing_to_relocate === true;
+
+    document.getElementById('modal-preferences').classList.remove('hidden');
+}
+
+async function savePreferences(e) {
+    e.preventDefault();
+    const token = localStorage.getItem('token');
+    const payload = {
+        desired_job_title: document.getElementById('edit-pref-title').value,
+        employment_type: document.getElementById('edit-pref-type').value,
+        work_mode_preference: document.getElementById('edit-pref-mode').value,
+        expected_salary_min: document.getElementById('edit-pref-sal-min').value,
+        expected_salary_max: document.getElementById('edit-pref-sal-max').value,
+        notice_period_days: document.getElementById('edit-pref-notice').value,
+        willing_to_relocate: document.getElementById('edit-pref-relocate').checked
+    };
+
+    try {
+        const res = await fetch(`${API_BASE}/job-preferences`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+            body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+            closeModal('modal-preferences');
+            loadDashboardData();
+        } else {
+            const errorData = await res.json();
+            alert('Failed to save preferences: ' + (errorData.message || 'Unknown error'));
+        }
+    } catch (err) {
+        console.error('Error saving preferences:', err);
+        alert('An error occurred while saving preferences.');
+    }
 }
 
 function openAddExperienceModal() {
@@ -352,6 +440,28 @@ async function saveGeneric(endpoint, payload, modalId) {
             loadDashboardData();
         } else { alert('Failed'); }
     } catch (e) { console.error(e); }
+}
+
+async function deleteAccount() {
+    if (!confirm("Are you sure you want to delete your account? This action cannot be undone.")) return;
+
+    try {
+        const res = await fetch(`${API_BASE}/profile`, {
+            method: 'DELETE',
+            headers: { 'x-auth-token': localStorage.getItem('token') }
+        });
+
+        if (res.ok) {
+            alert('Account deleted successfully.');
+            logout();
+        } else {
+            const data = await res.json();
+            alert(data.message || 'Failed to delete account');
+        }
+    } catch (err) {
+        console.error('Delete Account Error:', err);
+        alert('An error occurred while deleting the account.');
+    }
 }
 
 // ==========================================

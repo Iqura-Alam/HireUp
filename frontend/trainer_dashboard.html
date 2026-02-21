@@ -153,8 +153,14 @@
 
         <!-- Main Content -->
         <div class="right-col">
+            <div id="trainer-verification-warning"
+                style="display: none; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <strong>Pending Verification:</strong> Your account is currently pending admin approval. You cannot
+                create new courses until your account is verified.
+            </div>
+
             <!-- Create Course -->
-            <div class="card">
+            <div id="create-course-card" class="card" style="display: none;">
                 <h3>Create New Course</h3>
                 <form onsubmit="createCourse(event)">
                     <div class="form-group">

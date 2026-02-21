@@ -21,6 +21,15 @@ async function loadEmployerProfile() {
             document.getElementById('edit-location').value = data.location;
             document.getElementById('edit-contact').value = data.contact_number;
             document.getElementById('edit-website').value = data.website;
+
+            // Handle Verification Status
+            if (data.is_verified) {
+                document.getElementById('btn-post-job').style.display = 'block';
+                document.getElementById('employer-verification-warning').style.display = 'none';
+            } else {
+                document.getElementById('btn-post-job').style.display = 'none';
+                document.getElementById('employer-verification-warning').style.display = 'block';
+            }
         }
     } catch (err) {
         console.error(err);
@@ -245,7 +254,7 @@ async function viewApplications(jobId) {
                         <small>Exp: ${app.experience_years} Years</small><br>
                         <small>Applied: ${new Date(app.applied_at).toLocaleDateString()}</small><br>
                         <div style="margin-top: 0.5rem; display: flex; gap: 1rem;">
-                            <a href="profile.html?type=candidate&id=${app.candidate_id}" target="_blank" style="color: var(--primary-color); font-size: 0.9rem; text-decoration: underline;">View Profile</a>
+                            <a href="profile.html?type=candidate&id=${app.candidate_id}" style="color: var(--primary-color); font-size: 0.9rem; text-decoration: underline;">View Profile</a>
                             <a href="javascript:void(0)" onclick="downloadCV(${app.application_id})" style="color: var(--primary-color); font-size: 0.9rem; text-decoration: underline;">Download CV</a>
                         </div>
                         ${answersHtml}
@@ -347,4 +356,26 @@ function addQuestion() {
         <button type="button" onclick="this.parentElement.remove()" class="btn" style="background: #ef4444; width: auto; padding: 0.5rem;">X</button>
     `;
     container.appendChild(div);
+}
+
+async function deleteAccount() {
+    if (!confirm("Are you sure you want to delete your account? This action cannot be undone.")) return;
+
+    try {
+        const res = await fetch(`${API_BASE}/profile`, {
+            method: 'DELETE',
+            headers: { 'x-auth-token': localStorage.getItem('token') }
+        });
+
+        if (res.ok) {
+            alert('Account deleted successfully.');
+            logout();
+        } else {
+            const data = await res.json();
+            alert(data.message || 'Failed to delete account');
+        }
+    } catch (err) {
+        console.error('Delete Account Error:', err);
+        alert('An error occurred while deleting the account.');
+    }
 }
