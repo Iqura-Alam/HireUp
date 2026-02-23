@@ -8,7 +8,7 @@ exports.getProfile = async (req, res) => {
     try {
         const result = await pool.query(`
             SELECT tp.trainer_id, tp.organization_name, tp.specialization, tp.contact_number,
-                   u.username, u.email
+                   tp.is_verified, u.username, u.email
             FROM trainer_profile tp
             JOIN users u ON u.user_id = tp.user_id
             WHERE tp.user_id = $1
@@ -44,7 +44,7 @@ exports.getPublicTrainerProfile = async (req, res) => {
     try {
         const result = await pool.query(`
             SELECT tp.trainer_id, tp.organization_name, tp.specialization, tp.contact_number,
-                   u.username, u.email
+                   tp.is_verified, u.username, u.email
             FROM trainer_profile tp
             JOIN users u ON u.user_id = tp.user_id
             WHERE tp.trainer_id = $1

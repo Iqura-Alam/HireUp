@@ -69,6 +69,21 @@
             font-size: 0.8rem;
             color: var(--text-muted);
         }
+
+        @media (max-width: 992px) {
+            .container>div {
+                grid-template-columns: 1fr !important;
+            }
+
+            aside {
+                position: static !important;
+                margin-bottom: 2rem;
+            }
+
+            #courses-feed {
+                grid-template-columns: 1fr !important;
+            }
+        }
     </style>
 </head>
 
@@ -95,51 +110,76 @@
         </div>
     </nav>
 
-    <div class="container">
-        <h1 style="margin-bottom: 0.5rem;">Upskill Your Career</h1>
-        <p style="color: var(--text-muted); margin-bottom: 2rem;">Discover courses to bridge your skill gaps and advance
-            your journey.</p>
+    <div class="container" style="max-width: 1200px;">
+        <div style="margin-bottom: 2rem;">
+            <h1 style="margin-bottom: 0.5rem;">Upskill Your Career</h1>
+            <p style="color: var(--text-muted);">Discover courses to bridge your skill gaps and advance your journey.
+            </p>
+        </div>
 
-        <!-- Filter Bar -->
-        <div class="card"
-            style="margin-bottom: 2.5rem; padding: 1.5rem; background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border);">
-            <div
-                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: flex-end;">
-                <div class="form-group" style="margin: 0;">
-                    <label style="font-size: 0.8rem; color: var(--text-muted);">Skills (Select Multiple)</label>
+        <div style="display: grid; grid-template-columns: 280px 1fr; gap: 2rem; align-items: start;">
+            <!-- Sidebar Filters -->
+            <aside class="card" style="padding: 1.5rem; position: sticky; top: 100px;">
+                <h3
+                    style="font-size: 1.1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.75rem;">
+                    Filters</h3>
+
+                <div class="form-group">
+                    <label
+                        style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">Search
+                        Course</label>
+                    <input type="text" id="filter-search" placeholder="Keyword..." oninput="loadCourses()"
+                        style="width: 100%;">
+                </div>
+
+                <div class="form-group">
+                    <label
+                        style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">Skills</label>
                     <select id="filter-skill" multiple placeholder="Select skills..." onchange="loadCourses()">
                         <!-- Dynamic Skills -->
                     </select>
                 </div>
-                <div class="form-group" style="margin: 0;">
-                    <label style="font-size: 0.8rem; color: var(--text-muted);">Trainer / Organization</label>
-                    <select id="filter-trainer" onchange="loadCourses()">
+
+                <div class="form-group">
+                    <label
+                        style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">Trainer</label>
+                    <select id="filter-trainer" onchange="loadCourses()" style="width: 100%;">
                         <option value="">All Trainers</option>
                         <!-- Dynamic Trainers -->
                     </select>
                 </div>
-                <div class="form-group" style="margin: 0;">
-                    <label style="font-size: 0.8rem; color: var(--text-muted);">Max Fee (BDT)</label>
-                    <input type="number" id="filter-fee" placeholder="Limit" oninput="loadCourses()">
+
+                <div class="form-group">
+                    <label
+                        style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">Max
+                        Fee (BDT)</label>
+                    <input type="number" id="filter-fee" placeholder="Limit" oninput="loadCourses()"
+                        style="width: 100%;">
                 </div>
-                <div class="form-group" style="margin: 0;">
-                    <label style="font-size: 0.8rem; color: var(--text-muted);">Mode</label>
-                    <select id="filter-mode" onchange="loadCourses()">
+
+                <div class="form-group">
+                    <label
+                        style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">Mode</label>
+                    <select id="filter-mode" onchange="loadCourses()" style="width: 100%;">
                         <option value="All">All Modes</option>
                         <option value="Online">Online</option>
                         <option value="Offline">Offline</option>
                     </select>
                 </div>
-            </div>
-            <div style="margin-top: 1rem; text-align: right;">
-                <button onclick="resetFilters()"
-                    style="background:none; border:none; color:var(--primary-color); cursor:pointer; font-size: 0.85rem; text-decoration: underline;">Reset
-                    Filters</button>
-            </div>
-        </div>
 
-        <div id="courses-feed">
-            <p style="text-align: center; color: var(--text-muted);">Loading courses...</p>
+                <button onclick="resetFilters()"
+                    style="width: 100%; background: none; border: 1px solid var(--glass-border); color: var(--text-muted); padding: 0.6rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem; margin-top: 1rem; transition: all 0.2s;">
+                    Reset All Filters
+                </button>
+            </aside>
+
+            <!-- Main Results Area -->
+            <main>
+                <div id="courses-feed"
+                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 1.5rem;">
+                    <p style="text-align: center; color: var(--text-muted); grid-column: 1/-1;">Loading courses...</p>
+                </div>
+            </main>
         </div>
     </div>
 
@@ -166,6 +206,7 @@
                 const trainer = document.getElementById('filter-trainer').value;
                 const maxFee = document.getElementById('filter-fee').value;
                 const mode = document.getElementById('filter-mode').value;
+                const search = document.getElementById('filter-search').value;
 
                 // Build Query String
                 const params = new URLSearchParams();
@@ -173,6 +214,7 @@
                 if (trainer) params.append('trainer', trainer);
                 if (maxFee) params.append('maxFee', maxFee);
                 if (mode && mode !== 'All') params.append('mode', mode);
+                if (search) params.append('search', search);
 
                 try {
                     const res = await fetch(`${API_CANDIDATE}/courses?${params.toString()}`, {
@@ -196,9 +238,27 @@
                             ? course.skills_taught.map(s => `<span class="skill-tag">${s}</span>`).join('')
                             : '';
 
-                        const enrollBtn = course.is_enrolled
-                            ? `<button class="btn" disabled style="background: var(--text-muted); cursor: not-allowed; width: auto;">Enrolled</button>`
-                            : `<button onclick="enroll('${course.course_id}')" class="btn" style="width: auto; padding: 0.75rem 2rem;">Enroll Now</button>`;
+                        let enrollBtn = '';
+                        if (course.is_enrolled) {
+                            let statusLabel = 'Enrolled';
+                            let btnColor = 'var(--text-muted)';
+
+                            if (course.enrollment_status === 'Applied') {
+                                statusLabel = 'Applied';
+                                btnColor = '#fbbf24'; // Amber
+                                enrollBtn = `<button class="btn" disabled style="background: ${btnColor}; cursor: not-allowed; width: auto; opacity: 0.8; border: none;">${statusLabel}</button>`;
+                            } else if (course.enrollment_status === 'Rejected') {
+                                statusLabel = 'Re-apply';
+                                btnColor = '#6366f1'; // Indigo/Cool Blue
+                                enrollBtn = `<button onclick="enroll('${course.course_id}')" class="btn" style="background: ${btnColor}; width: auto; border: none;">${statusLabel}</button>`;
+                            } else if (course.enrollment_status === 'Shortlisted' || course.enrollment_status === 'Hired') {
+                                statusLabel = 'Enrolled';
+                                btnColor = '#10b981'; // Green
+                                enrollBtn = `<button class="btn" disabled style="background: ${btnColor}; cursor: not-allowed; width: auto; opacity: 0.8; border: none;">${statusLabel}</button>`;
+                            }
+                        } else {
+                            enrollBtn = `<button onclick="enroll('${course.course_id}')" class="btn" style="width: auto; padding: 0.75rem 2rem;">Enroll Now</button>`;
+                        }
 
                         const div = document.createElement('div');
                         div.className = 'course-card';
@@ -295,6 +355,7 @@
 
         function resetFilters() {
             if (skillSelectInstance) skillSelectInstance.clear();
+            document.getElementById('filter-search').value = '';
             document.getElementById('filter-trainer').value = '';
             document.getElementById('filter-fee').value = '';
             document.getElementById('filter-mode').value = 'All';
@@ -309,11 +370,18 @@
                 });
 
                 if (res.ok) {
-                    alert('Enrolled successfully!');
+                    alert('Enrollment request submitted!');
                     loadCourses();
                 } else {
                     const data = await res.json();
-                    alert(data.message || 'Failed to enroll');
+                    if (res.status === 403 && data.remaining) {
+                        // Better formatting for "2 days 23:52:34.946678"
+                        let timeStr = data.remaining.split('.')[0]; // remove microseconds
+                        timeStr = timeStr.replace(/00:/g, '').trim();
+                        alert(`Re-application Cooldown: Please wait ${timeStr} before applying again.`);
+                    } else {
+                        alert(data.message || 'Enrollment failed');
+                    }
                 }
             } catch (err) {
                 console.error(err);

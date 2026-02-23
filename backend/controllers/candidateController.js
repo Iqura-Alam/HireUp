@@ -395,7 +395,7 @@ exports.deleteProject = async (req, res) => {
 
 exports.getAllCourses = async (req, res) => {
     const userId = req.user.id;
-    const { skill, trainer, maxFee, mode } = req.query;
+    const { skill, trainer, maxFee, mode, search } = req.query;
 
     try {
         let query = `
@@ -406,10 +406,11 @@ exports.getAllCourses = async (req, res) => {
                 JOIN skill s ON s.skill_id = cs.skill_id
                 WHERE cs.course_id = c.course_id
             ) as skills_taught,
-            CASE WHEN e.enrollment_id IS NOT NULL THEN TRUE ELSE FALSE END as is_enrolled
+            CASE WHEN e.enrollment_id IS NOT NULL THEN TRUE ELSE FALSE END as is_enrolled,
+            e.status as enrollment_status
             FROM course c
             JOIN trainer_profile tp ON tp.trainer_id = c.trainer_id
-            LEFT JOIN enrollment e ON e.course_id = c.course_id AND e.candidate_id = (SELECT candidate_id FROM candidate_profile WHERE user_id = $1)
+            LEFT JOIN enrollment e ON e.course_id = c.course_id AND e.candidate_id = $1
             WHERE 1=1
         `;
         const params = [userId];
@@ -446,6 +447,12 @@ exports.getAllCourses = async (req, res) => {
             pIndex++;
         }
 
+        if (search) {
+            query += ` AND c.title ILIKE $${pIndex}`;
+            params.push(`%${search}%`);
+            pIndex++;
+        }
+
         query += ` ORDER BY c.created_at DESC`;
 
         const result = await pool.query(query, params);
@@ -465,6 +472,15 @@ exports.enrollInCourse = async (req, res) => {
         res.status(200).json({ message: 'Enrolled successfully' });
     } catch (error) {
         console.error('Enroll Error:', error);
+
+        if (error.message.includes('COOLDOWN:')) {
+            const remaining = error.message.split('COOLDOWN:')[1];
+            return res.status(403).json({
+                message: 'Cooldown active',
+                remaining: remaining
+            });
+        }
+
         if (error.code === 'P0001' || error.message.includes('already enrolled')) {
             return res.status(400).json({ message: 'Already enrolled in this course' });
         }

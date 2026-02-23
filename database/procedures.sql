@@ -486,10 +486,32 @@ CREATE OR REPLACE PROCEDURE sp_enroll_course(
 )
 LANGUAGE plpgsql
 AS $$
+DECLARE
+    v_status application_status;
+    v_updated_at TIMESTAMPTZ;
+    v_remaining_interval INTERVAL;
 BEGIN
-    -- unique enrollment checking
-    IF EXISTS (SELECT 1 FROM enrollment WHERE candidate_id = p_candidate_id AND course_id = p_course_id) THEN
-        RAISE EXCEPTION 'Candidate already enrolled in this course.';
+    SELECT status, updated_at INTO v_status, v_updated_at
+    FROM enrollment
+    WHERE candidate_id = p_candidate_id AND course_id = p_course_id;
+
+    IF v_status IS NOT NULL THEN
+        IF v_status = 'Rejected' THEN
+            v_remaining_interval := (v_updated_at + INTERVAL '3 days') - now();
+            IF v_remaining_interval > INTERVAL '0 seconds' THEN
+                RAISE EXCEPTION 'COOLDOWN:%', v_remaining_interval;
+            ELSE
+                -- Allow re-applying
+                UPDATE enrollment
+                SET status = 'Applied',
+                    updated_at = now(),
+                    enrolled_at = now()
+                WHERE candidate_id = p_candidate_id AND course_id = p_course_id;
+                RETURN;
+            END IF;
+        ELSE
+            RAISE EXCEPTION 'Candidate already enrolled in this course.';
+        END IF;
     END IF;
 
     INSERT INTO enrollment (candidate_id, course_id, status)
@@ -507,7 +529,8 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
     UPDATE enrollment
-    SET status = p_status
+    SET status = p_status,
+        updated_at = now()
     WHERE enrollment_id = p_enrollment_id;
 END;
 $$;
@@ -667,7 +690,8 @@ RETURNS TABLE (
     course_id BIGINT,
     title VARCHAR,
     missing_skills TEXT[],
-    enrollment_status VARCHAR
+    enrollment_status application_status,
+    completion_status VARCHAR
 )
 LANGUAGE plpgsql
 AS $$
@@ -684,13 +708,14 @@ BEGIN
         c.course_id,
         c.title,
         ARRAY_AGG(s.skill_name::TEXT)::TEXT[] AS missing_skills_taught,
-        e.completion_status::VARCHAR AS enrollment_status
+        e.status AS enrollment_status,
+        e.completion_status::VARCHAR AS completion_status
     FROM course c
     JOIN course_skill cs ON c.course_id = cs.course_id
     JOIN skill s ON s.skill_id = cs.skill_id
     JOIN candidate_missing_skills cms ON cms.skill_id = cs.skill_id
     LEFT JOIN enrollment e ON e.course_id = c.course_id AND e.candidate_id = p_candidate_id
-    GROUP BY c.course_id, c.title, e.completion_status;
+    GROUP BY c.course_id, c.title, e.status, e.completion_status;
 END;
 $$;
 
@@ -700,7 +725,8 @@ RETURNS TABLE (
     course_id BIGINT,
     title VARCHAR,
     missing_skills TEXT[],
-    enrollment_status VARCHAR
+    enrollment_status application_status,
+    completion_status VARCHAR
 )
 LANGUAGE plpgsql
 AS $$
@@ -718,13 +744,14 @@ BEGIN
         c.course_id,
         c.title,
         ARRAY_AGG(s.skill_name::TEXT)::TEXT[] AS missing_skills_taught,
-        e.completion_status::VARCHAR AS enrollment_status
+        e.status AS enrollment_status,
+        e.completion_status::VARCHAR AS completion_status
     FROM course c
     JOIN course_skill cs ON c.course_id = cs.course_id
     JOIN skill s ON s.skill_id = cs.skill_id
     JOIN job_specific_missing_skills jsms ON jsms.skill_id = cs.skill_id
     LEFT JOIN enrollment e ON e.course_id = c.course_id AND e.candidate_id = p_candidate_id
-    GROUP BY c.course_id, c.title, e.completion_status;
+    GROUP BY c.course_id, c.title, e.status, e.completion_status;
 END;
 $$;
 
