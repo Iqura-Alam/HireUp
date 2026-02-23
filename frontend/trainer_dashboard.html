@@ -305,6 +305,26 @@
 
     <script src="js/auth.js"></script>
     <script src="js/trainer.js"></script>
+    <!-- View Reviews Modal -->
+    <div id="viewReviewsModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 600px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 id="view-reviews-title" style="margin: 0; border: none; padding: 0;">Course Reviews</h3>
+                <span onclick="closeViewReviewsModal()"
+                    style="cursor: pointer; font-size: 1.5rem; color: var(--text-muted);">&times;</span>
+            </div>
+
+            <div id="reviews-container"
+                style="max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem;">
+                <p style="color: var(--text-muted); text-align: center;">Loading reviews...</p>
+            </div>
+
+            <div style="margin-top: 1.5rem; text-align: right;">
+                <button onclick="closeViewReviewsModal()" class="btn"
+                    style="width: auto; padding: 0.5rem 1.5rem; background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border);">Close</button>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

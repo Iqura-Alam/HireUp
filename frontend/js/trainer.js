@@ -176,6 +176,10 @@ async function loadCourses() {
                                 <button onclick="openEditModal(${c.course_id})" style="background: none; border: none; cursor: pointer; color: #6366f1;">Edit</button>
                                 <button onclick="deleteCourse(${c.course_id})" style="background: none; border: none; cursor: pointer; color: #ef4444;">Delete</button>
                             </div>
+                            <div style="margin-top: 5px;">
+                                <button onclick="openViewReviews('${c.course_id}', '${c.title.replace(/'/g, "\\'")}')" 
+                                        style="background: none; border: none; color: var(--primary-color); text-decoration: underline; font-size: 0.8rem; cursor: pointer;">View Reviews</button>
+                            </div>
                         </div>
                     </div>
                     <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
@@ -547,3 +551,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
+async function openViewReviews(courseId, title) {
+    const modal = document.getElementById('viewReviewsModal');
+    if (!modal) return;
+
+    document.getElementById('view-reviews-title').textContent = `Reviews for ${title}`;
+    modal.classList.remove('hidden');
+
+    const container = document.getElementById('reviews-container');
+    container.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 1rem;">Loading reviews...</p>';
+
+    try {
+        const res = await fetch(`${TRAINER_API}/courses/${courseId}/reviews`, {
+            headers: { 'x-auth-token': localStorage.getItem('token') }
+        });
+        const reviews = await res.json();
+
+        if (reviews.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 2rem;">No reviews yet for this course.</p>';
+            return;
+        }
+
+        container.innerHTML = reviews.map(r => `
+            <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; border: 1px solid var(--glass-border);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <span style="font-weight: 600; color: var(--primary-color);">${r.username}</span>
+                    <span style="color: #fbbf24;">${'★'.repeat(r.rating)}</span>
+                </div>
+                <p style="margin: 0; font-size: 0.95rem; line-height: 1.5;">${r.review_text || '<span style="color: var(--text-muted); font-style: italic;">No comment.</span>'}</p>
+                 <div style="text-align: right; margin-top: 0.5rem;">
+                    <small style="color: var(--text-muted);">${new Date(r.created_at).toLocaleDateString()}</small>
+                </div>
+            </div>
+        `).join('');
+    } catch (err) {
+        console.error('Fetch Reviews Error:', err);
+        container.innerHTML = '<p style="color: #fca5a5; text-align: center; padding: 1rem;">Failed to load reviews.</p>';
+    }
+}
+
+function closeViewReviewsModal() {
+    document.getElementById('viewReviewsModal').classList.add('hidden');
+}

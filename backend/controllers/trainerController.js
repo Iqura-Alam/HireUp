@@ -8,7 +8,7 @@ exports.getProfile = async (req, res) => {
     try {
         const result = await pool.query(`
             SELECT tp.trainer_id, tp.organization_name, tp.specialization, tp.contact_number,
-                   u.username, u.email
+                   tp.is_verified, u.username, u.email
             FROM trainer_profile tp
             JOIN users u ON u.user_id = tp.user_id
             WHERE tp.user_id = $1
@@ -44,7 +44,7 @@ exports.getPublicTrainerProfile = async (req, res) => {
     try {
         const result = await pool.query(`
             SELECT tp.trainer_id, tp.organization_name, tp.specialization, tp.contact_number,
-                   u.username, u.email
+                   tp.is_verified, u.username, u.email
             FROM trainer_profile tp
             JOIN users u ON u.user_id = tp.user_id
             WHERE tp.trainer_id = $1
@@ -248,6 +248,43 @@ exports.getTopSkills = async (req, res) => {
         res.json(result.rows);
     } catch (error) {
         console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+exports.getTrainerCourseReviews = async (req, res) => {
+    const { id: courseId } = req.params;
+    const userId = req.user.id;
+    try {
+        // Verify this trainer owns the course
+        const trainerRes = await pool.query('SELECT trainer_id FROM trainer_profile WHERE user_id = $1', [userId]);
+        if (trainerRes.rows.length === 0) return res.status(404).json({ message: 'Trainer not found' });
+        const trainerId = trainerRes.rows[0].trainer_id;
+
+        const courseCheck = await pool.query('SELECT course_id FROM course WHERE course_id = $1 AND trainer_id = $2', [courseId, trainerId]);
+        if (courseCheck.rows.length === 0) return res.status(403).json({ message: 'Access denied' });
+
+        const result = await pool.query(`
+            SELECT 
+                cr.rating, 
+                cr.review_text, 
+                cr.created_at,
+                u.username
+            FROM course_review cr
+            JOIN users u ON u.user_id = cr.candidate_id
+            WHERE cr.course_id = $1
+            ORDER BY cr.created_at DESC
+        `, [courseId]);
+
+        // Anonymize usernames
+        const reviews = result.rows.map(r => ({
+            ...r,
+            username: r.username.substring(0, 2) + '*'.repeat(10)
+        }));
+
+        res.json(reviews);
+    } catch (error) {
+        console.error('Trainer Fetch Reviews Error:', error);
         res.status(500).json({ message: 'Server Error' });
     }
 };

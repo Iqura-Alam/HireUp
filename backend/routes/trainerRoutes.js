@@ -22,6 +22,7 @@ router.delete('/courses/:id', trainerController.deleteCourse);
 router.get('/enrollments', trainerController.getCourseEnrollments);
 router.patch('/enrollments/:id', trainerController.manageEnrollment);
 router.post('/complete-course', trainerController.completeCourse);
+router.get('/courses/:id/reviews', trainerController.getTrainerCourseReviews);
 
 
 // Skill management

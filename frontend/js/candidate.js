@@ -550,12 +550,28 @@ async function loadEnrollments() {
             let label = e.status;
             if (e.status === 'Shortlisted') { badgeColor = '#34d399'; label = 'Accepted'; }
             if (e.status === 'Rejected') { badgeColor = '#ef4444'; label = 'Rejected'; }
-            if (e.completion_status === 'Completed') { badgeColor = '#10b981'; label = 'Completed'; }
+            if (e.completion_status === 'Completed') {
+                badgeColor = '#10b981';
+                label = 'Completed';
+            }
+
+            let reviewBtn = '';
+            if (e.completion_status === 'Completed') {
+                if (e.has_reviewed) {
+                    reviewBtn = `<button onclick="openViewReviews('${e.course_id}', '${e.course_title.replace(/'/g, "\\'")}')" class="btn" style="width: auto; padding: 0.2rem 0.6rem; font-size: 0.75rem; background: rgba(168, 85, 247, 0.2); border: 1px solid var(--primary-color);">View Review</button>`;
+                } else {
+                    reviewBtn = `<button onclick="openReviewModal('${e.course_id}', '${e.course_title.replace(/'/g, "\\'")}')" class="btn" style="width: auto; padding: 0.2rem 0.6rem; font-size: 0.75rem; background: #10b981;">Review</button>`;
+                }
+            } else if (e.status === 'Shortlisted') {
+                // Option to view general reviews even if not completed
+                reviewBtn = `<button onclick="openViewReviews('${e.course_id}', '${e.course_title.replace(/'/g, "\\'")}')" class="btn" style="width: auto; padding: 0.2rem 0.6rem; font-size: 0.75rem; background: transparent; border: 1px solid var(--glass-border); color: var(--text-muted);">Reviews</button>`;
+            }
 
             html += `<tr>
                 <td style="padding:0.5rem; border-bottom:1px solid rgba(255,255,255,0.05);">${e.course_title}</td>
                 <td style="padding:0.5rem; border-bottom:1px solid rgba(255,255,255,0.05); color:var(--text-muted);">${e.trainer_name || '—'}</td>
                 <td style="padding:0.5rem; border-bottom:1px solid rgba(255,255,255,0.05);"><span style="background:rgba(${badgeColor === '#34d399' ? '52,211,153' : badgeColor === '#ef4444' ? '239,68,68' : badgeColor === '#10b981' ? '16,185,129' : '251,191,36'},0.2); color:${badgeColor}; padding:0.2rem 0.6rem; border-radius:12px; font-size:0.8rem; font-weight:600;">${label}</span></td>
+                <td style="padding:0.5rem; border-bottom:1px solid rgba(255,255,255,0.05); text-align:right;">${reviewBtn}</td>
             </tr>`;
         });
         html += '</tbody></table>';
@@ -612,3 +628,64 @@ document.addEventListener('DOMContentLoaded', () => {
     try { loadDashboardData(); } catch (e) { }
     try { loadEnrollments(); } catch (e) { }
 });
+// Review Modal Logic (Reused from courses.html or similar)
+function openReviewModal(courseId, title) {
+    // We need the review modal to be present in candidate_dashboard.html too
+    // Let's check if it's there. If not, we might need to add it or redirect.
+    // For now, let's assume it's added to the HTML.
+    const modal = document.getElementById('reviewModal');
+    if (!modal) {
+        alert('Please go to the Courses page to review this course.');
+        window.location.href = 'courses.html';
+        return;
+    }
+    document.getElementById('review-course-id').value = courseId;
+    document.getElementById('review-course-title').textContent = title;
+    modal.classList.remove('hidden');
+}
+
+async function openViewReviews(courseId, title) {
+    const modal = document.getElementById('viewReviewsModal');
+    if (!modal) {
+        alert('Please go to the Courses page to view reviews.');
+        window.location.href = 'courses.html';
+        return;
+    }
+    document.getElementById('view-reviews-title').textContent = `Reviews for ${title}`;
+    modal.classList.remove('hidden');
+    const container = document.getElementById('reviews-container');
+    container.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 1rem;">Loading reviews...</p>';
+
+    try {
+        const res = await fetch(`${API_BASE}/courses/${courseId}/reviews`, {
+            headers: { 'x-auth-token': localStorage.getItem('token') }
+        });
+        const reviews = await res.json();
+
+        if (reviews.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 2rem;">No reviews yet.</p>';
+            return;
+        }
+
+        container.innerHTML = reviews.map(r => `
+            <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; border: 1px solid var(--glass-border); margin-bottom: 0.75rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <span style="font-weight: 600; color: var(--primary-color);">${r.username}</span>
+                    <span style="color: #fbbf24;">${'★'.repeat(r.rating)}</span>
+                </div>
+                <p style="margin: 0; font-size: 0.95rem; line-height: 1.5;">${r.review_text || '<span style="color: var(--text-muted); font-style: italic;">No comment.</span>'}</p>
+            </div>
+        `).join('');
+    } catch (err) {
+        console.error(err);
+        container.innerHTML = '<p style="color: #fca5a5; text-align: center; padding: 1rem;">Failed to load reviews.</p>';
+    }
+}
+
+function closeViewReviewsModal() {
+    document.getElementById('viewReviewsModal').classList.add('hidden');
+}
+
+function closeReviewModal() {
+    document.getElementById('reviewModal').classList.add('hidden');
+}

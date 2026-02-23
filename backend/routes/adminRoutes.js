@@ -33,4 +33,8 @@ router.get('/users', adminController.getAllUsers);
 router.post('/users/:id/status', adminController.updateUserStatus);
 router.delete('/users/:id', adminController.deleteUser);
 
+// Low-Rated Course Management
+router.get('/low-rated-courses', adminController.getLowRatedCourses);
+router.delete('/courses/:id', adminController.deleteCourse);
+
 module.exports = router;

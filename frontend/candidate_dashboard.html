@@ -502,6 +502,118 @@
 
     <script src="js/auth.js"></script>
     <script src="js/candidate.js"></script>
+    <!-- Review Modal -->
+    <div id="reviewModal" class="modal hidden">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 1rem;">Review Course</h3>
+            <p id="review-course-title" style="color: var(--text-muted); margin-bottom: 1.5rem;"></p>
+            <input type="hidden" id="review-course-id">
+            <div class="form-group">
+                <label>Rating</label>
+                <div id="star-selector" class="star-input"
+                    style="display: flex; gap: 0.5rem; cursor: pointer; color: #4b5563; font-size: 1.5rem;">
+                    <span data-value="1">★</span>
+                    <span data-value="2">★</span>
+                    <span data-value="3">★</span>
+                    <span data-value="4">★</span>
+                    <span data-value="5">★</span>
+                </div>
+                <input type="hidden" id="rating-value" value="0">
+            </div>
+            <div class="form-group">
+                <label>Your Feedback</label>
+                <textarea id="review-text" rows="4"
+                    style="width: 100%; background: rgba(0,0,0,0.1); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text-main); padding: 0.75rem;"
+                    placeholder="What did you learn?"></textarea>
+            </div>
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button onclick="submitReview()" class="btn">Submit Review</button>
+                <button onclick="closeReviewModal()" class="btn"
+                    style="background: transparent; border: 1px solid var(--glass-border);">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Reviews Modal -->
+    <div id="viewReviewsModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 600px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 id="view-reviews-title" style="margin: 0;">Course Reviews</h3>
+                <span onclick="closeViewReviewsModal()"
+                    style="cursor: pointer; font-size: 1.5rem; color: var(--text-muted);">&times;</span>
+            </div>
+            <div id="reviews-container"
+                style="max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem;">
+                <p style="color: var(--text-muted); text-align: center;">Loading reviews...</p>
+            </div>
+            <div style="margin-top: 1.5rem; text-align: right;">
+                <button onclick="closeViewReviewsModal()" class="btn"
+                    style="width: auto; padding: 0.5rem 1.5rem;">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .star-input span.active {
+            color: #fbbf24;
+        }
+
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 2rem;
+            border-radius: 16px;
+            max-width: 500px;
+            margin: 10vh auto;
+        }
+    </style>
+
+    <script>
+        // Star selection logic
+        document.querySelectorAll('#star-selector span').forEach(star => {
+            star.addEventListener('click', function () {
+                const val = this.getAttribute('data-value');
+                document.getElementById('rating-value').value = val;
+                document.querySelectorAll('#star-selector span').forEach(s => {
+                    if (s.getAttribute('data-value') <= val) s.classList.add('active');
+                    else s.classList.remove('active');
+                });
+            });
+        });
+
+        async function submitReview() {
+            const courseId = document.getElementById('review-course-id').value;
+            const rating = document.getElementById('rating-value').value;
+            const reviewText = document.getElementById('review-text').value;
+            if (rating == 0) { alert('Please select a rating'); return; }
+            try {
+                const res = await fetch(`http://localhost:5000/api/candidate/courses/${courseId}/review`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-auth-token': localStorage.getItem('token') },
+                    body: JSON.stringify({ rating, reviewText })
+                });
+                if (res.ok) {
+                    alert('Thank you for your review!');
+                    closeReviewModal();
+                    loadEnrollments();
+                } else {
+                    const data = await res.json();
+                    alert(data.message || 'Failed to submit review');
+                }
+            } catch (err) { console.error(err); alert('Server error'); }
+        }
+    </script>
 </body>
 
 </html>

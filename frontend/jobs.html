@@ -312,18 +312,39 @@
                 // Show recommended courses
                 coursesDiv.innerHTML = '<p style="color: var(--text-muted); margin: 1rem 0 0.5rem; font-size: 0.9rem;"><strong>📚 Recommended Courses:</strong></p>' +
                     recommended.slice(0, 5).map(c => {
-                        const isEnrolled = c.enrollment_status === 'In Progress';
+                        let statusText = 'Enroll';
+                        let statusColor = 'var(--primary-color)';
+                        let isDisabled = false;
+                        let onclickAction = `directEnroll('${c.course_id}', '${c.title.replace(/'/g, "\\'")}', this)`;
+
+                        if (c.completion_status === 'Completed') {
+                            statusText = 'Completed';
+                            statusColor = '#10b981';
+                            isDisabled = true;
+                        } else if (c.enrollment_status === 'Applied') {
+                            statusText = 'Applied';
+                            statusColor = '#fbbf24';
+                            isDisabled = true;
+                        } else if (c.enrollment_status === 'Rejected') {
+                            statusText = 'Re-apply';
+                            statusColor = '#6366f1';
+                        } else if (c.enrollment_status === 'Shortlisted' || c.enrollment_status === 'Hired') {
+                            statusText = 'Learning';
+                            statusColor = '#3b82f6';
+                            isDisabled = true;
+                        }
+
                         return `
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.75rem; margin-bottom:0.5rem; background:rgba(255,255,255,0.03); border:1px solid ${isEnrolled ? 'rgba(59,130,246,0.3)' : 'var(--glass-border)'}; border-radius:8px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.75rem; margin-bottom:0.5rem; background:rgba(255,255,255,0.03); border:1px solid ${isDisabled ? 'rgba(255,255,255,0.1)' : 'var(--glass-border)'}; border-radius:8px;">
                             <div style="flex: 1;">
                                 <strong style="color:white; font-size:0.9rem;">${c.title}</strong>
                                 <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Teaches: ${c.missing_skills.join(', ')}</div>
                             </div>
-                            <button onclick="${isEnrolled ? '' : `directEnroll('${c.course_id}', '${c.title.replace(/'/g, "\\'")}', this)`}" 
+                            <button onclick="${isDisabled ? '' : onclickAction}" 
                                     class="btn" 
-                                    ${isEnrolled ? 'disabled' : ''}
-                                    style="width:auto; padding:0.3rem 1rem; font-size:0.75rem; white-space:nowrap; ${isEnrolled ? 'background: rgba(59,130,246,0.4); cursor: not-allowed;' : ''}">
-                                ${isEnrolled ? 'Learning...' : 'Enroll'}
+                                    ${isDisabled ? 'disabled' : ''}
+                                    style="width:auto; padding:0.3rem 1rem; font-size:0.75rem; white-space:nowrap; background: ${statusColor}; ${isDisabled ? 'opacity: 0.6; cursor: not-allowed;' : ''}">
+                                ${statusText}
                             </button>
                         </div>
                     `}).join('');
@@ -355,13 +376,20 @@
 
                 if (res.ok) {
                     alert('Enrollment successful!');
-                    btn.textContent = 'Enrolled';
-                    btn.style.background = 'var(--text-muted)';
+                    btn.textContent = 'Applied';
+                    btn.style.background = '#fbbf24';
                     btn.style.cursor = 'not-allowed';
                 } else {
-                    alert(data.message || 'Enrollment failed');
+                    if (res.status === 403 && data.remaining) {
+                        let timeStr = data.remaining.split('.')[0];
+                        timeStr = timeStr.replace(/00:/g, '').trim();
+                        alert(`Re-application Cooldown: Please wait ${timeStr}.`);
+                        btn.textContent = 'Re-apply';
+                    } else {
+                        alert(data.message || 'Enrollment failed');
+                        btn.textContent = 'Enroll';
+                    }
                     btn.disabled = false;
-                    btn.textContent = 'Enroll';
                 }
             } catch (err) {
                 console.error('Enroll error:', err);
