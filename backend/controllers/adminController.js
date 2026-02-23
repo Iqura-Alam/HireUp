@@ -145,3 +145,33 @@ exports.deleteUser = async (req, res) => {
         res.status(500).json({ message: 'Server Error' });
     }
 };
+
+// NEW: Low-Rated Course Monitoring
+exports.getLowRatedCourses = async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT c.*, tp.organization_name as trainer_name 
+            FROM course c
+            JOIN trainer_profile tp ON tp.trainer_id = c.trainer_id
+            WHERE c.average_rating < 2 AND c.total_reviews > 0
+            ORDER BY c.average_rating ASC
+        `);
+        res.json(result.rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+exports.deleteCourse = async (req, res) => {
+    const { id } = req.params;
+    try {
+        // Admin can permanently delete a course or we could use status = 'Deleted'
+        // For now, let's keep it simple as requested: "delete that course"
+        await pool.query('DELETE FROM course WHERE course_id = $1', [id]);
+        res.json({ message: 'Course deleted successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};

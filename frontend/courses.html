@@ -150,7 +150,7 @@
     </nav>
 
     <!-- Review Modal -->
-    <div id="reviewModal" class="modal">
+    <div id="reviewModal" class="modal hidden">
         <div class="modal-content">
             <h2 style="margin-bottom: 1rem;">Review Course</h2>
             <p id="review-course-title" style="color: var(--text-muted); margin-bottom: 1.5rem;"></p>
@@ -502,12 +502,12 @@
         function openReviewModal(courseId, title) {
             document.getElementById('review-course-id').value = courseId;
             document.getElementById('review-course-title').textContent = title;
-            document.getElementById('reviewModal').style.display = 'block';
+            document.getElementById('reviewModal').classList.remove('hidden');
             resetReviewForm();
         }
 
         function closeReviewModal() {
-            document.getElementById('reviewModal').style.display = 'none';
+            document.getElementById('reviewModal').classList.add('hidden');
         }
 
         function resetReviewForm() {

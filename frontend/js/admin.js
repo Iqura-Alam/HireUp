@@ -25,7 +25,8 @@ function showView(viewId, element) {
         'overview': 'Dashboard Overview',
         'verification': 'Verification Queue',
         'users': 'User Management',
-        'audit': 'System Audit Logs'
+        'audit': 'System Audit Logs',
+        'alerts': 'Low-Rated Course Alerts'
     };
     document.getElementById('view-title').innerText = titles[viewId] || 'Admin Dashboard';
 }
@@ -238,6 +239,61 @@ async function deleteAccount(userId) {
     } catch (e) { console.error(e); alert('Error'); }
 }
 
+// Low-Rated Course Alerts
+async function loadLowRatedCourses() {
+    const div = document.getElementById('course-alerts-list');
+    const token = localStorage.getItem('token');
+    try {
+        const response = await fetch(`${ADMIN_API}/low-rated-courses`, { headers: { 'x-auth-token': token } });
+        const data = await response.json();
+        if (response.ok) {
+            if (data.length === 0) {
+                div.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">No low-rated courses at the moment. Good job!</p>';
+                return;
+            }
+            let html = '<table><tr><th>Course</th><th>Trainer</th><th>Rating</th><th>Reviews</th><th>Created</th><th>Actions</th></tr>';
+            data.forEach(course => {
+                html += `<tr>
+                    <td>${course.title}</td>
+                    <td>${course.trainer_name}</td>
+                    <td style="color: #f87171; font-weight: bold;">${parseFloat(course.average_rating).toFixed(1)} ★</td>
+                    <td>${course.total_reviews}</td>
+                    <td>${new Date(course.created_at).toLocaleDateString()}</td>
+                    <td>
+                        <button onclick="keepCourse(${course.course_id})" style="background-color: #6366f1; margin-right: 5px; width: auto; padding: 5px 10px;">Keep</button>
+                        <button onclick="deleteCourse(${course.course_id})" style="background-color: #ef4444; width: auto; padding: 5px 10px;">Delete</button>
+                    </td>
+                </tr>`;
+            });
+            html += '</table>';
+            div.innerHTML = html;
+        } else {
+            div.innerHTML = 'Error loading alerts';
+        }
+    } catch (e) { console.error(e); div.innerHTML = 'Error'; }
+}
+
+async function keepCourse(courseId) {
+    // For now, "Keep" just dismisses it from this view session.
+    // In a real app, we might mark it as 'reviewed_by_admin' in the DB.
+    alert('Decision made: Course will be kept. (Dismissing from current view)');
+    loadLowRatedCourses();
+}
+
+async function deleteCourse(courseId) {
+    if (!confirm('Are you sure you want to PERMANENTLY delete this low-rated course?')) return;
+    const token = localStorage.getItem('token');
+    try {
+        const response = await fetch(`${ADMIN_API}/courses/${courseId}`, {
+            method: 'DELETE',
+            headers: { 'x-auth-token': token }
+        });
+        const data = await response.json();
+        alert(data.message);
+        loadLowRatedCourses();
+    } catch (e) { console.error(e); alert('Error deleting course'); }
+}
+
 // Init
 document.addEventListener('DOMContentLoaded', () => {
     loadVerificationQueue();
@@ -245,4 +301,5 @@ document.addEventListener('DOMContentLoaded', () => {
     loadTopSkills();
     loadPopularCourses();
     loadAuditLogs();
+    loadLowRatedCourses();
 });
