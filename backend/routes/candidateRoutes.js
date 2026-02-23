@@ -54,9 +54,10 @@ router.post('/jobs/:jobId/apply', [auth, upload.single('cv')], candidateControll
 router.get('/courses', auth, candidateController.getAllCourses);
 router.get('/course-filters', auth, candidateController.getCourseFilters);
 router.post('/courses/:courseId/enroll', auth, candidateController.enrollInCourse);
+router.post('/courses/:courseId/review', auth, candidateController.addCourseReview);
+router.get('/courses/:courseId/reviews', auth, candidateController.getCourseReviews);
 router.get('/my-enrollments', auth, candidateController.getMyEnrollments);
 router.get('/recommended-courses', auth, candidateController.getRecommendedCourses);
 router.get('/top-skills', auth, candidateController.getTopSkills);
 
 module.exports = router;
-

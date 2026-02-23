@@ -70,6 +70,43 @@
             color: var(--text-muted);
         }
 
+        .rating-stars {
+            color: #fbbf24;
+            display: flex;
+            gap: 2px;
+            align-items: center;
+        }
+
+        .star-input {
+            display: flex;
+            gap: 5px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: #4b5563;
+        }
+
+        .star-input span:hover,
+        .star-input span.active {
+            color: #fbbf24;
+        }
+
+        .modal {
+            position: fixed;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: #1e1e2e;
+            margin: 10% auto;
+            padding: 2rem;
+            border: 1px solid var(--glass-border);
+            width: 90%;
+            max-width: 500px;
+            border-radius: 15px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
         @media (max-width: 992px) {
             .container>div {
                 grid-template-columns: 1fr !important;
@@ -109,6 +146,41 @@
                 style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); width: auto; padding: 0.5rem 1rem;">Logout</button>
         </div>
     </nav>
+
+    </nav>
+
+    <!-- Review Modal -->
+    <div id="reviewModal" class="modal">
+        <div class="modal-content">
+            <h2 style="margin-bottom: 1rem;">Review Course</h2>
+            <p id="review-course-title" style="color: var(--text-muted); margin-bottom: 1.5rem;"></p>
+
+            <input type="hidden" id="review-course-id">
+
+            <div class="form-group">
+                <label>Rating</label>
+                <div id="star-selector" class="star-input">
+                    <span data-value="1">★</span>
+                    <span data-value="2">★</span>
+                    <span data-value="3">★</span>
+                    <span data-value="4">★</span>
+                    <span data-value="5">★</span>
+                </div>
+                <input type="hidden" id="rating-value" value="0">
+            </div>
+
+            <div class="form-group">
+                <label>Your Feedback</label>
+                <textarea id="review-text" rows="4" style="width: 100%;" placeholder="What did you learn?"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button onclick="submitReview()" class="btn">Submit Review</button>
+                <button onclick="closeReviewModal()" class="btn"
+                    style="background: transparent; border: 1px solid var(--glass-border);">Cancel</button>
+            </div>
+        </div>
+    </div>
 
     <div class="container" style="max-width: 1200px;">
         <div style="margin-bottom: 2rem;">
@@ -166,6 +238,15 @@
                         <option value="Offline">Offline</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label
+                        style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">Sort
+                        By</label>
+                    <select id="filter-sort" onchange="loadCourses()" style="width: 100%;">
+                        <option value="newest">Newest First</option>
+                        <option value="rating_high">Rating: High to Low</option>
+                    </select>
+                </div>
 
                 <button onclick="resetFilters()"
                     style="width: 100%; background: none; border: 1px solid var(--glass-border); color: var(--text-muted); padding: 0.6rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem; margin-top: 1rem; transition: all 0.2s;">
@@ -207,6 +288,7 @@
                 const maxFee = document.getElementById('filter-fee').value;
                 const mode = document.getElementById('filter-mode').value;
                 const search = document.getElementById('filter-search').value;
+                const sortBy = document.getElementById('filter-sort').value;
 
                 // Build Query String
                 const params = new URLSearchParams();
@@ -215,6 +297,7 @@
                 if (maxFee) params.append('maxFee', maxFee);
                 if (mode && mode !== 'All') params.append('mode', mode);
                 if (search) params.append('search', search);
+                if (sortBy) params.append('sortBy', sortBy);
 
                 try {
                     const res = await fetch(`${API_CANDIDATE}/courses?${params.toString()}`, {
@@ -240,8 +323,8 @@
 
                         let enrollBtn = '';
                         if (course.is_enrolled) {
-                            let statusLabel = 'Enrolled';
-                            let btnColor = 'var(--text-muted)';
+                            let statusLabel = '';
+                            let btnColor = '';
 
                             if (course.enrollment_status === 'Applied') {
                                 statusLabel = 'Applied';
@@ -252,13 +335,37 @@
                                 btnColor = '#6366f1'; // Indigo/Cool Blue
                                 enrollBtn = `<button onclick="enroll('${course.course_id}')" class="btn" style="background: ${btnColor}; width: auto; border: none;">${statusLabel}</button>`;
                             } else if (course.enrollment_status === 'Shortlisted' || course.enrollment_status === 'Hired') {
-                                statusLabel = 'Enrolled';
-                                btnColor = '#10b981'; // Green
-                                enrollBtn = `<button class="btn" disabled style="background: ${btnColor}; cursor: not-allowed; width: auto; opacity: 0.8; border: none;">${statusLabel}</button>`;
+                                if (course.completion_status === 'Completed') {
+                                    statusLabel = 'Completed';
+                                    btnColor = '#10b981'; // Green
+                                    enrollBtn = `
+                                        <div style="display: flex; gap: 0.5rem;">
+                                            <button class="btn" disabled style="background: ${btnColor}; cursor: not-allowed; width: auto; opacity: 0.8; border: none;">${statusLabel}</button>
+                                            <button onclick="openReviewModal('${course.course_id}', '${course.title.replace(/'/g, "\\'")}')" class="btn" style="background: var(--primary-color); width: auto; padding: 0.5rem 1rem;">Review</button>
+                                        </div>
+                                    `;
+                                } else {
+                                    statusLabel = 'Enrolled';
+                                    btnColor = '#10b981'; // Green
+                                    enrollBtn = `<button class="btn" disabled style="background: ${btnColor}; cursor: not-allowed; width: auto; opacity: 0.8; border: none;">${statusLabel}</button>`;
+                                }
                             }
                         } else {
                             enrollBtn = `<button onclick="enroll('${course.course_id}')" class="btn" style="width: auto; padding: 0.75rem 2rem;">Enroll Now</button>`;
                         }
+
+                        // Rating display
+                        const avgRating = parseFloat(course.average_rating) || 0;
+                        const fullStars = Math.floor(avgRating);
+                        const hasHalf = (avgRating - fullStars) >= 0.5;
+                        const ratingHtml = `
+                            <div class="rating-stars" title="${avgRating} average rating">
+                                ${'★'.repeat(fullStars)}${hasHalf ? '½' : ''}
+                                <span style="color: var(--text-muted); font-size: 0.8rem; margin-left: 4px;">(${course.total_reviews || 0})</span>
+                                <button onclick="openViewReviews('${course.course_id}', '${course.title.replace(/'/g, "\\'")}')" 
+                                        style="background: none; border: none; color: var(--primary-color); text-decoration: underline; font-size: 0.8rem; cursor: pointer; margin-left: 8px;">View Reviews</button>
+                            </div>
+                        `;
 
                         const div = document.createElement('div');
                         div.className = 'course-card';
@@ -269,6 +376,7 @@
                                     <div>
                                         <h3 style="margin: 0;">${course.title}</h3>
                                         <span style="color: var(--text-muted); font-size: 0.9rem;">${course.trainer_name || 'Individual Trainer'} • ${course.mode}</span>
+                                        ${ratingHtml}
                                         <br>
                                         <a href="profile.html?type=trainer&id=${course.trainer_id}" style="font-size: 0.8rem; color: var(--primary-color); text-decoration: underline;">View Trainer Profile</a>
                                     </div>
@@ -359,6 +467,7 @@
             document.getElementById('filter-trainer').value = '';
             document.getElementById('filter-fee').value = '';
             document.getElementById('filter-mode').value = 'All';
+            document.getElementById('filter-sort').value = 'newest';
             loadCourses();
         }
 
@@ -389,12 +498,140 @@
             }
         }
 
+        // Review Modal Functions
+        function openReviewModal(courseId, title) {
+            document.getElementById('review-course-id').value = courseId;
+            document.getElementById('review-course-title').textContent = title;
+            document.getElementById('reviewModal').style.display = 'block';
+            resetReviewForm();
+        }
+
+        function closeReviewModal() {
+            document.getElementById('reviewModal').style.display = 'none';
+        }
+
+        function resetReviewForm() {
+            document.getElementById('rating-value').value = 0;
+            document.getElementById('review-text').value = '';
+            document.querySelectorAll('#star-selector span').forEach(s => s.classList.remove('active'));
+        }
+
+        // Star selection logic
+        document.querySelectorAll('#star-selector span').forEach(star => {
+            star.addEventListener('click', function () {
+                const val = this.getAttribute('data-value');
+                document.getElementById('rating-value').value = val;
+
+                document.querySelectorAll('#star-selector span').forEach(s => {
+                    if (s.getAttribute('data-value') <= val) {
+                        s.classList.add('active');
+                    } else {
+                        s.classList.remove('active');
+                    }
+                });
+            });
+        });
+
+        async function submitReview() {
+            const courseId = document.getElementById('review-course-id').value;
+            const rating = document.getElementById('rating-value').value;
+            const reviewText = document.getElementById('review-text').value;
+
+            if (rating == 0) {
+                alert('Please select a rating');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_CANDIDATE}/courses/${courseId}/review`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-auth-token': localStorage.getItem('token')
+                    },
+                    body: JSON.stringify({ rating, reviewText })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    alert('Thank you for your review!');
+                    closeReviewModal();
+                    loadCourses();
+                } else {
+                    alert(data.message || 'Failed to submit review');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Server error while submitting review');
+            }
+        }
+
+        async function openViewReviews(courseId, title) {
+            document.getElementById('view-reviews-title').textContent = `Reviews for ${title}`;
+            document.getElementById('viewReviewsModal').classList.remove('hidden');
+            document.getElementById('reviews-container').innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 1rem;">Loading reviews...</p>';
+
+            try {
+                const res = await fetch(`${API_CANDIDATE}/courses/${courseId}/reviews`, {
+                    headers: { 'x-auth-token': localStorage.getItem('token') }
+                });
+                const reviews = await res.json();
+
+                const container = document.getElementById('reviews-container');
+                if (reviews.length === 0) {
+                    container.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 2rem;">No reviews yet for this course.</p>';
+                    return;
+                }
+
+                container.innerHTML = reviews.map(r => `
+                    <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; border: 1px solid var(--glass-border);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <span style="font-weight: 600; color: var(--primary-color);">${r.username}</span>
+                            <span style="color: #fbbf24;">${'★'.repeat(r.rating)}</span>
+                        </div>
+                        <p style="margin: 0; font-size: 0.95rem; line-height: 1.5;">${r.review_text || '<span style="color: var(--text-muted); font-style: italic;">No comment.</span>'}</p>
+                        <div style="text-align: right; margin-top: 0.5rem;">
+                            <small style="color: var(--text-muted);">${new Date(r.created_at).toLocaleDateString()}</small>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (err) {
+                console.error('Fetch Reviews Error:', err);
+                document.getElementById('reviews-container').innerHTML = '<p style="color: #fca5a5; text-align: center; padding: 1rem;">Failed to load reviews.</p>';
+            }
+        }
+
+        function closeViewReviewsModal() {
+            document.getElementById('viewReviewsModal').classList.add('hidden');
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             if (typeof checkAuth === 'function') checkAuth();
             loadFilterOptions(); // Load dynamic dropdowns
             loadCourses();
         });
     </script>
+    <!-- View Reviews Modal -->
+    <div id="viewReviewsModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 600px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 id="view-reviews-title" style="margin: 0;">Course Reviews</h2>
+                <span onclick="closeViewReviewsModal()"
+                    style="cursor: pointer; font-size: 1.5rem; color: var(--text-muted);">&times;</span>
+            </div>
+
+            <div id="reviews-container"
+                style="max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem;">
+                <p style="color: var(--text-muted); text-align: center;">Loading reviews...</p>
+            </div>
+
+            <div style="margin-top: 1.5rem; text-align: right;">
+                <button onclick="closeViewReviewsModal()" class="btn"
+                    style="width: auto; padding: 0.5rem 1.5rem;">Close</button>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

@@ -438,12 +438,47 @@ BEGIN
       proficiency_level = EXCLUDED.proficiency_level, 
       years_of_experience = EXCLUDED.years_of_experience,
       custom_skill_name = EXCLUDED.custom_skill_name,
-      updated_at = now();
+        updated_at = now();
 END;
 $$;
 
 
--- trainer and admin procedures created
+CREATE OR REPLACE PROCEDURE sp_add_course_review(
+    p_candidate_id BIGINT,
+    p_course_id BIGINT,
+    p_rating INT,
+    p_review_text TEXT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    -- 1. Check if course is completed
+    IF NOT EXISTS (
+        SELECT 1 FROM enrollment 
+        WHERE candidate_id = p_candidate_id 
+        AND course_id = p_course_id 
+        AND completion_status = 'Completed'
+    ) THEN
+        RAISE EXCEPTION 'You can only review a course after completing it.';
+    END IF;
+
+    -- 2. Check if already reviewed (handled by unique constraint but better to check explicitly)
+    IF EXISTS (SELECT 1 FROM course_review WHERE candidate_id = p_candidate_id AND course_id = p_course_id) THEN
+        RAISE EXCEPTION 'You have already reviewed this course.';
+    END IF;
+
+    -- 3. Insert review
+    INSERT INTO course_review (course_id, candidate_id, rating, review_text)
+    VALUES (p_course_id, p_candidate_id, p_rating, p_review_text);
+
+    -- 4. Update course average rating and total reviews
+    UPDATE course
+    SET 
+        average_rating = (SELECT AVG(rating) FROM course_review WHERE course_id = p_course_id),
+        total_reviews = (SELECT COUNT(*) FROM course_review WHERE course_id = p_course_id)
+    WHERE course_id = p_course_id;
+END;
+$$;
 
 -- trainer creates a course + skills
 CREATE OR REPLACE PROCEDURE sp_add_course(

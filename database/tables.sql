@@ -287,6 +287,8 @@ CREATE TABLE IF NOT EXISTS course (
   duration_days   INT CHECK (duration_days > 0),
   mode            VARCHAR(50) CHECK (mode IN ('Online', 'Offline')),
   fee             DECIMAL(10, 2) CHECK (fee >= 0),
+  average_rating  DECIMAL(3, 2) DEFAULT 0,
+  total_reviews   INT DEFAULT 0,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -296,6 +298,16 @@ CREATE TABLE IF NOT EXISTS course_skill (
   course_id       BIGINT NOT NULL REFERENCES course(course_id) ON DELETE CASCADE,
   skill_id        BIGINT NOT NULL REFERENCES skill(skill_id) ON DELETE CASCADE,
   CONSTRAINT uq_course_skill UNIQUE (course_id, skill_id)
+);
+
+CREATE TABLE IF NOT EXISTS course_review (
+  review_id       BIGSERIAL PRIMARY KEY,
+  course_id       BIGINT NOT NULL REFERENCES course(course_id) ON DELETE CASCADE,
+  candidate_id    BIGINT NOT NULL REFERENCES candidate_profile(candidate_id) ON DELETE CASCADE,
+  rating          INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  review_text     TEXT,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT uq_candidate_course_review UNIQUE (candidate_id, course_id)
 );
 
 CREATE TABLE IF NOT EXISTS enrollment (

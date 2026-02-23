@@ -395,11 +395,12 @@ exports.deleteProject = async (req, res) => {
 
 exports.getAllCourses = async (req, res) => {
     const userId = req.user.id;
-    const { skill, trainer, maxFee, mode, search } = req.query;
+    const { skill, trainer, maxFee, mode, search, sortBy } = req.query;
 
     try {
         let query = `
             SELECT c.*, tp.organization_name as trainer_name,
+            c.average_rating, c.total_reviews,
             (
                 SELECT jsonb_agg(s.skill_name)
                 FROM course_skill cs
@@ -407,7 +408,8 @@ exports.getAllCourses = async (req, res) => {
                 WHERE cs.course_id = c.course_id
             ) as skills_taught,
             CASE WHEN e.enrollment_id IS NOT NULL THEN TRUE ELSE FALSE END as is_enrolled,
-            e.status as enrollment_status
+            e.status as enrollment_status,
+            e.completion_status
             FROM course c
             JOIN trainer_profile tp ON tp.trainer_id = c.trainer_id
             LEFT JOIN enrollment e ON e.course_id = c.course_id AND e.candidate_id = $1
@@ -453,7 +455,12 @@ exports.getAllCourses = async (req, res) => {
             pIndex++;
         }
 
-        query += ` ORDER BY c.created_at DESC`;
+        // Add Sorting Logic
+        if (sortBy === 'rating_high') {
+            query += ` ORDER BY c.average_rating DESC NULLS LAST, c.total_reviews DESC, c.created_at DESC`;
+        } else {
+            query += ` ORDER BY c.created_at DESC`;
+        }
 
         const result = await pool.query(query, params);
         res.json(result.rows);
@@ -488,13 +495,40 @@ exports.enrollInCourse = async (req, res) => {
     }
 };
 
+exports.addCourseReview = async (req, res) => {
+    const { courseId } = req.params;
+    const candidateId = req.user.id;
+    const { rating, reviewText } = req.body;
+
+    if (!rating || rating < 1 || rating > 5) {
+        return res.status(400).json({ message: 'Invalid rating. Must be between 1 and 5.' });
+    }
+
+    try {
+        await pool.query('CALL sp_add_course_review($1, $2, $3, $4)', [
+            parseInt(candidateId),
+            parseInt(courseId),
+            parseInt(rating),
+            reviewText
+        ]);
+        res.status(201).json({ message: 'Review submitted successfully' });
+    } catch (error) {
+        console.error('Review Error:', error);
+        if (error.code === 'P0001') {
+            return res.status(400).json({ message: error.message || 'Failed to submit review' });
+        }
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
 exports.getMyEnrollments = async (req, res) => {
     const candidateId = req.user.id;
     try {
         const result = await pool.query(`
-            SELECT e.enrollment_id, e.status, e.completion_status, e.enrolled_at,
+            SELECT e.enrollment_id, e.course_id, e.status, e.completion_status, e.enrolled_at,
                    c.title AS course_title, c.mode,
-                   tp.organization_name AS trainer_name
+                   tp.organization_name AS trainer_name,
+                   (SELECT EXISTS (SELECT 1 FROM course_review cr WHERE cr.course_id = e.course_id AND cr.candidate_id = e.candidate_id)) as has_reviewed
             FROM enrollment e
             JOIN course c ON c.course_id = e.course_id
             JOIN trainer_profile tp ON tp.trainer_id = c.trainer_id
@@ -552,6 +586,34 @@ exports.getCourseFilters = async (req, res) => {
         });
     } catch (error) {
         console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+exports.getCourseReviews = async (req, res) => {
+    const { courseId } = req.params;
+    try {
+        const result = await pool.query(`
+            SELECT 
+                cr.rating, 
+                cr.review_text, 
+                cr.created_at,
+                u.username
+            FROM course_review cr
+            JOIN users u ON u.user_id = cr.candidate_id
+            WHERE cr.course_id = $1
+            ORDER BY cr.created_at DESC
+        `, [courseId]);
+
+        // Anonymize usernames: first 2 chars + **********
+        const reviews = result.rows.map(r => ({
+            ...r,
+            username: r.username.substring(0, 2) + '*'.repeat(10)
+        }));
+
+        res.json(reviews);
+    } catch (error) {
+        console.error('Fetch Reviews Error:', error);
         res.status(500).json({ message: 'Server Error' });
     }
 };
