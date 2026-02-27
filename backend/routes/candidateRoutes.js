@@ -59,6 +59,7 @@ router.post('/courses/:courseId/review', auth, candidateController.addCourseRevi
 router.get('/courses/:courseId/reviews', auth, candidateController.getCourseReviews);
 router.get('/my-enrollments', auth, candidateController.getMyEnrollments);
 router.get('/recommended-courses', auth, candidateController.getRecommendedCourses);
+router.get('/recommended-jobs', auth, candidateController.getRecommendedJobs);
 router.get('/top-skills', auth, candidateController.getTopSkills);
 
 module.exports = router;

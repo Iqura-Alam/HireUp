@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HireUp - Recommended Jobs</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .job-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .job-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-color);
+        }
+
+        .match-score {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: var(--primary-gradient);
+            color: white;
+            padding: 0.5rem 1rem;
+            font-weight: bold;
+            border-bottom-left-radius: 12px;
+            font-size: 0.9rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .company-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .company-logo {
+            width: 50px;
+            height: 50px;
+            background: var(--primary-gradient);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .skills-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .skill-tag {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .skill-tag.matched {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .skill-tag.missing {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav
+        style="padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; background: rgba(30,30,46,0.9); backdrop-filter: blur(10px);">
+        <div style="display: flex; align-items: center; gap: 2rem;">
+            <h2
+                style="margin: 0; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.8rem;">
+                HireUp</h2>
+            <div class="nav-links" style="display: flex; gap: 1rem; align-items: center;">
+                <a href="candidate_dashboard.html"
+                    style="color: var(--text-muted); text-decoration: none;">Dashboard</a>
+                <a href="jobs.html" style="color: var(--text-muted); text-decoration: none;">Find Jobs</a>
+                <a href="recommended-jobs.html"
+                    style="color: white; font-weight: bold; text-decoration: none;">Recommended Jobs</a>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <button onclick="logout()" class="btn"
+                style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); width: auto; padding: 0.5rem 1rem;">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div style="text-align: center; margin-bottom: 2.5rem;">
+            <h1 style="margin-bottom: 0.5rem;">Recommended Jobs</h1>
+            <p style="color: var(--text-muted); font-size: 1.1rem;">Jobs curated for you based on your profile skills,
+                title, and location preferences.</p>
+        </div>
+
+        <div id="jobs-container">
+            <p style="text-align: center; color: var(--text-muted);">Loading recommendations...</p>
+        </div>
+    </div>
+
+    <!-- Application Modal -->
+    <div id="applicationModal" class="modal"
+        style="display:none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(5px);">
+        <div class="modal-content"
+            style="background-color: #1e1e2e; margin: 5% auto; padding: 20px; border: 1px solid var(--primary-color); width: 80%; max-width: 600px; border-radius: 10px;">
+            <h3>Apply for <span id="modal-job-title">Job</span></h3>
+
+            <div id="skill-gap-section"
+                style="display:none; margin-bottom: 1.5rem; padding: 1rem; border: 1px solid rgba(168,85,247,0.3); border-radius: 10px; background: rgba(168,85,247,0.05);">
+                <h4 style="margin: 0 0 0.75rem; color: #a855f7;">📊 Skill Gap Analysis</h4>
+                <div id="missing-skills-list" style="margin-bottom: 0.75rem;"></div>
+                <div id="skill-warning"
+                    style="display: none; padding: 0.75rem; border-radius: 8px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; font-size: 0.85rem; margin-bottom: 1rem;">
+                </div>
+                <div id="recommended-courses-list"></div>
+            </div>
+
+            <form onsubmit="submitApplication(event)">
+                <input type="hidden" id="modal-job-id">
+                <div class="form-group">
+                    <label>Upload CV (PDF only)</label>
+                    <input type="file" id="cv-upload" accept=".pdf" required>
+                </div>
+                <div id="modal-questions-container" style="margin-top: 1.5rem;"></div>
+                <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" class="btn"
+                        style="background: transparent; border: 1px solid #4ade80; color: #4ade80; width: auto; padding: 0.5rem 1rem;"
+                        onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn" id="btn-submit-app"
+                        style="background: #4ade80; color: #1e1e2e; width: auto; padding: 0.5rem 1rem;">Submit
+                        Application</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            loadRecommendedJobs();
+        });
+
+        async function loadRecommendedJobs() {
+            const container = document.getElementById('jobs-container');
+            container.innerHTML = '<p style="text-align: center; color: var(--text-muted);">Loading recommendations...</p>';
+
+            try {
+                const res = await fetch(`http://localhost:5000/api/candidate/recommended-jobs`, {
+                    headers: { 'x-auth-token': localStorage.getItem('token') }
+                });
+
+                if (res.ok) {
+                    const jobs = await res.json();
+                    container.innerHTML = '';
+
+                    if (jobs.length === 0) {
+                        container.innerHTML = '<div style="text-align: center; padding: 3rem; background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.2);"><p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 1rem;">No matching jobs found based on your profile yet.</p><p style="color: var(--text-muted);">Try adding more skills and experience to your profile to improve recommendations.</p><a href="candidate_dashboard.html" class="btn" style="display: inline-block; width: auto; margin-top: 1rem; padding: 0.5rem 1.5rem;">Update My Profile</a></div>';
+                        return;
+                    }
+
+                    jobs.forEach(job => {
+                        const card = document.createElement('div');
+                        card.className = 'job-card';
+
+                        let matchedSkillsHtml = '';
+                        if (job.matched_skills && job.matched_skills.length > 0) {
+                            job.matched_skills.forEach(skill => {
+                                matchedSkillsHtml += `<span class="skill-tag matched">✓ ${skill}</span>`;
+                            });
+                        }
+
+                        let missingSkillsHtml = '';
+                        if (job.missing_skills && job.missing_skills.length > 0) {
+                            job.missing_skills.forEach(skill => {
+                                missingSkillsHtml += `<span class="skill-tag missing">✗ ${skill}</span>`;
+                            });
+                        }
+
+                        // Fallback if no skills required
+                        if (matchedSkillsHtml === '' && missingSkillsHtml === '') {
+                            matchedSkillsHtml = `<span class="skill-tag">No specific skills listed</span>`;
+                        }
+
+                        // Parse expiration date gracefully
+                        const expiryDate = new Date(job.expires_at).toLocaleDateString();
+
+                        card.innerHTML = `
+                            <div class="match-score">${job.match_score}% Match</div>
+                            <div class="header">
+                                <div class="company-info">
+                                    <div class="company-logo">${job.company_name.substring(0, 1).toUpperCase()}</div>
+                                    <div>
+                                        <h3 style="margin: 0; color: white;">${job.title}</h3>
+                                        <p style="margin: 0.2rem 0 0 0; color: var(--primary-color); font-weight: 500;">${job.company_name}</p>
+                                    </div>
+                                </div>
+                                <button class="btn" style="width: auto; padding: 0.5rem 1.5rem;" onclick="openApplicationModal(${job.job_id}, '${job.title}', '${job.company_name}')">Apply Now</button>
+                            </div>
+                            
+                            <div style="display: flex; gap: 1.5rem; margin-bottom: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">
+                                <span>📍 ${job.location || 'Remote'}</span>
+                                <span>💰 ${job.salary_range || 'Not specified'}</span>
+                                <span>⏳ Expires: ${expiryDate}</span>
+                            </div>
+
+                            <div style="margin-top: 1rem; border-top: 1px solid var(--glass-border); padding-top: 1rem;">
+                                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">Skills Match</p>
+                                <div class="skills-list">
+                                    ${matchedSkillsHtml}
+                                    ${missingSkillsHtml}
+                                </div>
+                            </div>
+                        `;
+                        container.appendChild(card);
+                    });
+                } else {
+                    container.innerHTML = '<p style="text-align: center; color: #ef4444;">Failed to load jobs.</p>';
+                }
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = '<p style="text-align: center; color: #ef4444;">Server offline or error loading jobs.</p>';
+            }
+        }
+
+        async function openApplicationModal(jobId, jobTitle, companyName) {
+            document.getElementById('modal-job-id').value = jobId;
+            document.getElementById('modal-job-title').textContent = `${jobTitle} at ${companyName}`;
+            document.getElementById('cv-upload').value = '';
+
+            const qContainer = document.getElementById('modal-questions-container');
+            qContainer.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">Loading application details...</p>';
+            document.getElementById('btn-submit-app').disabled = true;
+
+            const gapSection = document.getElementById('skill-gap-section');
+            const missList = document.getElementById('missing-skills-list');
+            const recList = document.getElementById('recommended-courses-list');
+            const skillWarning = document.getElementById('skill-warning');
+
+            gapSection.style.display = 'none';
+            missList.innerHTML = '';
+            recList.innerHTML = '';
+            skillWarning.style.display = 'none';
+
+            document.getElementById('applicationModal').style.display = 'block';
+
+            try {
+                // Fetch missing skills / courses
+                const recRes = await fetch(`http://localhost:5000/api/candidate/recommended-courses?jobId=${jobId}`, {
+                    headers: { 'x-auth-token': localStorage.getItem('token') }
+                });
+
+                let courses = [];
+                let hasMissingSkills = false;
+
+                if (recRes.ok) {
+                    courses = await recRes.json();
+                }
+
+                if (courses && courses.length > 0) {
+                    hasMissingSkills = true;
+                    gapSection.style.display = 'block';
+
+                    let allMissingSkillsSet = new Set();
+                    courses.forEach(c => {
+                        if (c.missing_skills_taught) {
+                            c.missing_skills_taught.forEach(s => allMissingSkillsSet.add(s));
+                        }
+                    });
+
+                    if (allMissingSkillsSet.size > 0) {
+                        missList.innerHTML = `<p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">Missing Required Skills:</p>`;
+                        let tagsHtml = `<div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">`;
+                        allMissingSkillsSet.forEach(s => {
+                            tagsHtml += `<span style="background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.75rem; border: 1px solid rgba(239, 68, 68, 0.2);">${s}</span>`;
+                        });
+                        tagsHtml += `</div>`;
+                        missList.innerHTML += tagsHtml;
+
+                        skillWarning.innerHTML = `⚠️ <strong>Note:</strong> You are missing ${allMissingSkillsSet.size} core skill(s) required for this position. This severely lowers your chances of being shortlisted. Consider taking the courses below.`;
+                        skillWarning.style.display = 'block';
+                    }
+
+                    recList.innerHTML = `<p style="font-size: 0.85rem; color: var(--text-muted); margin: 1rem 0 0.5rem;">Recommended Courses to Bridge the Gap:</p>`;
+                    let cListHtml = `<div style="display:flex; flex-direction: column; gap: 0.5rem;">`;
+                    courses.forEach(c => {
+                        cListHtml += `
+                            <div style="background: rgba(255,255,255,0.05); padding: 0.75rem; border-radius: 8px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center;">
+                                <span>${c.title}</span>
+                                <a href="courses.html" style="color: var(--primary-color); text-decoration: none; font-weight: bold;">View Course &rarr;</a>
+                            </div>
+                        `;
+                    });
+                    cListHtml += `</div>`;
+                    recList.innerHTML += cListHtml;
+                }
+
+                // Load Questions
+                const res = await fetch(`http://localhost:5000/api/candidate/jobs/${jobId}/questions`, {
+                    headers: { 'x-auth-token': localStorage.getItem('token') }
+                });
+
+                if (res.ok) {
+                    const questions = await res.json();
+                    qContainer.innerHTML = '';
+
+                    if (questions.length > 0) {
+                        let html = '<h4 style="margin-bottom: 1rem;">Employer Questions</h4>';
+                        questions.forEach(q => {
+                            html += `
+                                <div class="form-group">
+                                    <label>${q.question_text}</label>
+                                    <input type="hidden" name="question_id" value="${q.question_id}">
+                                    <textarea name="question_answer" rows="2" required placeholder="Your answer..."></textarea>
+                                </div>
+                            `;
+                        });
+                        qContainer.innerHTML = html;
+                    }
+                    document.getElementById('btn-submit-app').disabled = false;
+                } else {
+                    qContainer.innerHTML = '<p style="color: #ef4444;">Could not load application questions.</p>';
+                }
+            } catch (err) {
+                console.error(err);
+                qContainer.innerHTML = '<p style="color: #ef4444;">Server error loading details.</p>';
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('applicationModal').style.display = 'none';
+        }
+
+        async function submitApplication(e) {
+            e.preventDefault();
+            const jobId = document.getElementById('modal-job-id').value;
+            const cvFile = document.getElementById('cv-upload').files[0];
+
+            const qIds = document.getElementsByName('question_id');
+            const qAns = document.getElementsByName('question_answer');
+
+            let answers = [];
+            for (let i = 0; i < qIds.length; i++) {
+                answers.push({
+                    question_id: qIds[i].value,
+                    answer_text: qAns[i].value
+                });
+            }
+
+            const formData = new FormData();
+            formData.append('cv', cvFile);
+            formData.append('answers', JSON.stringify(answers));
+
+            try {
+                const res = await fetch(`http://localhost:5000/api/candidate/jobs/${jobId}/apply`, {
+                    method: 'POST',
+                    headers: {
+                        'x-auth-token': localStorage.getItem('token')
+                    },
+                    body: formData
+                });
+
+                if (res.ok) {
+                    alert('Application submitted successfully!');
+                    closeModal();
+                } else {
+                    const data = await res.json();
+                    alert(data.message || 'Failed to apply');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Server error while submitting application.');
+            }
+        }
+
+        window.onclick = function (event) {
+            const modal = document.getElementById('applicationModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+
+</html>

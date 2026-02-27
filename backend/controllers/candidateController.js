@@ -650,6 +650,19 @@ exports.getRecommendedCourses = async (req, res) => {
     }
 };
 
+exports.getRecommendedJobs = async (req, res) => {
+    const candidateId = req.user.id;
+    try {
+        const result = await pool.query(
+            'SELECT * FROM fn_recommend_jobs($1)', [candidateId]
+        );
+        res.json(result.rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
 exports.getCourseFilters = async (req, res) => {
     try {
         // Get ALL available skills for the filter
