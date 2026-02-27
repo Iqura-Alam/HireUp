@@ -249,6 +249,9 @@
             <div class="nav-link" onclick="showView('alerts', this)" style="border-left: 3px solid #f87171;">
                 <span class="icon">⚠️</span> Course Alerts
             </div>
+            <div class="nav-link" onclick="showView('jobs', this)">
+                <span class="icon">💼</span> Jobs
+            </div>
         </div>
     </div>
 
@@ -262,7 +265,7 @@
         <div id="view-overview" class="view-section active">
             <div class="stats-grid">
                 <div class="glass-panel">
-                    <h3 style="margin-bottom: 2rem; color: #a855f7;">Top Skills Demand</h3>
+                    <h3 style="margin-bottom: 2rem; color: #a855f7;">Skills Supply vs Demand Report</h3>
                     <div id="top-skills-list">Loading...</div>
                 </div>
                 <div class="glass-panel">
@@ -313,6 +316,16 @@
                     <p style="color: var(--text-muted); font-size: 0.9rem;">Courses with average rating below 2.0</p>
                 </div>
                 <div id="course-alerts-list">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Job Management View -->
+        <div id="view-jobs" class="view-section">
+            <div class="glass-panel">
+                <div class="section-header">
+                    <h3 style="margin: 0;">Job Postings Management</h3>
+                </div>
+                <div id="jobs-management-list">Loading...</div>
             </div>
         </div>
     </div>

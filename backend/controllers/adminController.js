@@ -175,3 +175,31 @@ exports.deleteCourse = async (req, res) => {
         res.status(500).json({ message: 'Server Error' });
     }
 };
+
+// Job Management
+exports.getAllJobs = async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT j.*, e.company_name,
+            (SELECT COUNT(*) FROM application a WHERE a.job_id = j.job_id) as application_count
+            FROM job j
+            JOIN employer e ON e.employer_id = j.employer_id
+            ORDER BY j.created_at DESC
+        `);
+        res.json(result.rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+exports.deleteJob = async (req, res) => {
+    const { id } = req.params;
+    try {
+        await pool.query('DELETE FROM job WHERE job_id = $1', [id]);
+        res.json({ message: 'Job deleted successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};

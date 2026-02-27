@@ -791,21 +791,33 @@ END;
 $$;
 
 -- fn_top_skills
+DROP FUNCTION IF EXISTS fn_top_skills();
 CREATE OR REPLACE FUNCTION fn_top_skills()
 RETURNS TABLE (
     skill_name VARCHAR,
-    demand_count BIGINT
+    demand_count BIGINT,
+    supply_count BIGINT
 )
 LANGUAGE plpgsql
 AS $$
 BEGIN
     RETURN QUERY
-    SELECT s.skill_name, COUNT(jr.job_id) as demand_count
-    FROM skill s
-    JOIN job_requirement jr ON s.skill_id = jr.skill_id
-    GROUP BY s.skill_name
-    ORDER BY demand_count DESC
-    LIMIT 10;
+    WITH skill_stats AS (
+        SELECT 
+            s.skill_id,
+            s.skill_name,
+            (SELECT COUNT(jr.job_id) FROM job_requirement jr WHERE jr.skill_id = s.skill_id) AS demand_count,
+            (SELECT COUNT(cs.candidate_id) FROM candidate_skill cs WHERE cs.skill_id = s.skill_id) AS supply_count
+        FROM skill s
+    )
+    SELECT 
+        ss.skill_name, 
+        ss.demand_count, 
+        ss.supply_count
+    FROM skill_stats ss
+    WHERE ss.demand_count > 0 OR ss.supply_count > 0
+    ORDER BY ss.demand_count DESC, ss.supply_count DESC
+    LIMIT 20;
 END;
 $$;
 
