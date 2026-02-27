@@ -809,10 +809,11 @@ BEGIN
 END;
 $$;
 
--- fn_recommend_jobs
+DROP FUNCTION IF EXISTS fn_recommend_jobs(BIGINT);
 CREATE OR REPLACE FUNCTION fn_recommend_jobs(p_candidate_id BIGINT)
 RETURNS TABLE (
     job_id BIGINT,
+    employer_id BIGINT,
     title VARCHAR,
     company_name VARCHAR,
     location VARCHAR,
@@ -854,6 +855,7 @@ BEGIN
     job_scoring AS (
         SELECT 
             j.job_id,
+            j.employer_id,
             j.title,
             e.company_name,
             j.location as job_location,
@@ -889,6 +891,7 @@ BEGIN
     )
     SELECT 
         js.job_id, 
+        js.employer_id,
         js.title, 
         js.company_name, 
         COALESCE(js.job_location, js.emp_location) AS location, 
