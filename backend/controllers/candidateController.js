@@ -57,8 +57,11 @@ exports.addSkill = async (req, res) => {
 };
 
 exports.getAllJobs = async (req, res) => {
+    const userId = req.user.id;
+    const { search, skill, location, minSalary, minExperience } = req.query;
+
     try {
-        const result = await pool.query(`
+        let query = `
             SELECT j.*, e.company_name, e.industry, e.location as company_location, e.website as company_website,
             (
                 SELECT jsonb_agg(s.skill_name)
@@ -71,12 +74,81 @@ exports.getAllJobs = async (req, res) => {
             JOIN employer e ON e.employer_id = j.employer_id
             LEFT JOIN application a ON a.job_id = j.job_id AND a.candidate_id = (SELECT candidate_id FROM candidate_profile WHERE candidate_id = $1)
             WHERE j.status = 'Open' AND j.expires_at >= CURRENT_DATE
-            ORDER BY j.created_at DESC
-        `, [req.user.id]);
+        `;
+        const params = [userId];
+        let pIndex = 2;
 
-        res.json(result.rows);
+        if (search) {
+            query += ` AND (j.title ILIKE $${pIndex} OR e.company_name ILIKE $${pIndex})`;
+            params.push(`%${search}%`);
+            pIndex++;
+        }
+
+        if (skill) {
+            const skillList = Array.isArray(skill) ? skill : skill.split(',').map(s => s.trim());
+            query += ` AND EXISTS (
+                SELECT 1 FROM job_requirement jr2
+                JOIN skill s2 ON s2.skill_id = jr2.skill_id
+                WHERE jr2.job_id = j.job_id AND s2.skill_name ILIKE ANY($${pIndex})
+            )`;
+            params.push(skillList);
+            pIndex++;
+        }
+
+        if (location) {
+            query += ` AND e.location ILIKE $${pIndex}`;
+            params.push(`%${location}%`);
+            pIndex++;
+        }
+
+        query += ` ORDER BY j.created_at DESC`;
+
+        const result = await pool.query(query, params);
+        let jobs = result.rows;
+
+        // Parse salary strings to handle range filtering in code
+        // e.g. "50k-80k", "150k+", "Negotiable"
+        const maxSalaryArg = req.query.maxSalary;
+        const minSalaryArg = req.query.minSalary;
+
+        if (minSalaryArg || maxSalaryArg) {
+            const reqMin = minSalaryArg ? parseInt(minSalaryArg) : 0;
+            const reqMax = maxSalaryArg ? parseInt(maxSalaryArg) : Infinity;
+
+            jobs = jobs.filter(job => {
+                const range = job.salary_range ? job.salary_range.toLowerCase() : '';
+
+                // If it's negotiable or undefined, it's safer to not filter it out entirely, 
+                // but usually strictly filtered things drop "Negotiable". Let's drop it if strict min/max are provided.
+                if (range.includes('negotiable') || !range) return false;
+
+                let jobMin = 0;
+                let jobMax = Infinity;
+
+                if (range.includes('-')) {
+                    const parts = range.split('-');
+                    jobMin = parseInt(parts[0]) * (parts[0].includes('k') ? 1000 : 1);
+                    jobMax = parseInt(parts[1]) * (parts[1].includes('k') ? 1000 : 1);
+                } else if (range.includes('+')) {
+                    jobMin = parseInt(range) * (range.includes('k') ? 1000 : 1);
+                } else {
+                    jobMin = parseInt(range) * (range.includes('k') ? 1000 : 1);
+                    jobMax = jobMin; // single literal value
+                }
+
+                if (isNaN(jobMin)) jobMin = 0;
+                if (isNaN(jobMax)) jobMax = Infinity;
+
+                // We want jobs that overlap with the requested range
+                // A job's range [jobMin, jobMax] overlaps [reqMin, reqMax] if:
+                // jobMin <= reqMax AND jobMax >= reqMin
+                return (jobMin <= reqMax) && (jobMax >= reqMin);
+            });
+        }
+
+        res.json(jobs);
     } catch (error) {
-        console.error(error);
+        console.error('GetAllJobs Error:', error);
         res.status(500).json({ message: 'Server Error' });
     }
 };
@@ -624,6 +696,35 @@ exports.getTopSkills = async (req, res) => {
         res.json(result.rows);
     } catch (error) {
         console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+exports.getJobFilters = async (req, res) => {
+    try {
+        // Fetch ALL skills for dropdown autocomplete
+        const skillsQuery = await pool.query(`
+            SELECT DISTINCT skill_name 
+            FROM skill 
+            ORDER BY skill_name ASC
+        `);
+
+        // Get unique employer locations for open jobs
+        const locationsQuery = await pool.query(`
+            SELECT DISTINCT e.location 
+            FROM employer e
+            JOIN job j ON j.employer_id = e.employer_id
+            WHERE j.status = 'Open' AND j.expires_at >= CURRENT_DATE
+            AND e.location IS NOT NULL
+            ORDER BY e.location ASC
+        `);
+
+        res.json({
+            skills: skillsQuery.rows.map(r => r.skill_name),
+            locations: locationsQuery.rows.map(r => r.location)
+        });
+    } catch (error) {
+        console.error('Job Filters Error:', error);
         res.status(500).json({ message: 'Server Error' });
     }
 };

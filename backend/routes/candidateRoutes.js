@@ -48,6 +48,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 router.get('/jobs', auth, candidateController.getAllJobs);
+router.get('/job-filters', auth, candidateController.getJobFilters);
 router.get('/jobs/:jobId', auth, candidateController.getJobDetails);
 router.post('/jobs/:jobId/apply', [auth, upload.single('cv')], candidateController.applyForJob);
 
