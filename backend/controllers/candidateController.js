@@ -58,7 +58,7 @@ exports.addSkill = async (req, res) => {
 
 exports.getAllJobs = async (req, res) => {
     const userId = req.user.id;
-    const { search, skill, location, minSalary, minExperience } = req.query;
+    const { company, position, skill, location, minSalary, maxSalary, minExperience } = req.query;
 
     try {
         let query = `
@@ -78,25 +78,40 @@ exports.getAllJobs = async (req, res) => {
         const params = [userId];
         let pIndex = 2;
 
-        if (search) {
-            query += ` AND (j.title ILIKE $${pIndex} OR e.company_name ILIKE $${pIndex})`;
-            params.push(`%${search}%`);
+        if (company) {
+            query += ` AND e.company_name ILIKE $${pIndex}`;
+            params.push(`%${company}%`);
+            pIndex++;
+        }
+
+        if (position) {
+            query += ` AND j.title ILIKE $${pIndex}`;
+            params.push(`%${position}%`);
             pIndex++;
         }
 
         if (skill) {
-            const skillList = Array.isArray(skill) ? skill : skill.split(',').map(s => s.trim());
-            query += ` AND EXISTS (
-                SELECT 1 FROM job_requirement jr2
-                JOIN skill s2 ON s2.skill_id = jr2.skill_id
-                WHERE jr2.job_id = j.job_id AND s2.skill_name ILIKE ANY($${pIndex})
-            )`;
-            params.push(skillList);
-            pIndex++;
+            let skillList = [];
+            if (Array.isArray(skill)) {
+                skillList = skill;
+            } else if (typeof skill === 'string') {
+                skillList = skill.split(',').map(s => s.trim()).filter(s => s);
+            }
+
+            if (skillList.length > 0) {
+                // We use ILIKE ANY looking for any of the skills provided
+                query += ` AND EXISTS (
+                    SELECT 1 FROM job_requirement jr2
+                    JOIN skill s2 ON s2.skill_id = jr2.skill_id
+                    WHERE jr2.job_id = j.job_id AND s2.skill_name ILIKE ANY($${pIndex}::text[])
+                )`;
+                params.push(skillList);
+                pIndex++;
+            }
         }
 
         if (location) {
-            query += ` AND e.location ILIKE $${pIndex}`;
+            query += ` AND j.location ILIKE $${pIndex}`;
             params.push(`%${location}%`);
             pIndex++;
         }
@@ -709,19 +724,38 @@ exports.getJobFilters = async (req, res) => {
             ORDER BY skill_name ASC
         `);
 
-        // Get unique employer locations for open jobs
+        // Get unique job posting locations for open jobs
         const locationsQuery = await pool.query(`
-            SELECT DISTINCT e.location 
+            SELECT DISTINCT j.location 
+            FROM job j
+            WHERE j.status = 'Open' AND j.expires_at >= CURRENT_DATE
+            AND j.location IS NOT NULL
+            ORDER BY j.location ASC
+        `);
+
+        // Get unique company names for open jobs
+        const companiesQuery = await pool.query(`
+            SELECT DISTINCT e.company_name 
             FROM employer e
             JOIN job j ON j.employer_id = e.employer_id
             WHERE j.status = 'Open' AND j.expires_at >= CURRENT_DATE
-            AND e.location IS NOT NULL
-            ORDER BY e.location ASC
+            AND e.company_name IS NOT NULL
+            ORDER BY e.company_name ASC
+        `);
+
+        // Get unique job titles for open jobs
+        const positionsQuery = await pool.query(`
+            SELECT DISTINCT title 
+            FROM job 
+            WHERE status = 'Open' AND expires_at >= CURRENT_DATE
+            ORDER BY title ASC
         `);
 
         res.json({
             skills: skillsQuery.rows.map(r => r.skill_name),
-            locations: locationsQuery.rows.map(r => r.location)
+            locations: locationsQuery.rows.map(r => r.location),
+            companies: companiesQuery.rows.map(r => r.company_name),
+            positions: positionsQuery.rows.map(r => r.title)
         });
     } catch (error) {
         console.error('Job Filters Error:', error);

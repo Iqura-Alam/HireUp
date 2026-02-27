@@ -97,23 +97,39 @@
         <div
             style="background: var(--glass-bg); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; border: 1px solid var(--glass-border);">
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                <!-- Search -->
+                <!-- Position -->
                 <div>
                     <label
-                        style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem;">Search
-                        Job / Company</label>
-                    <input type="text" id="filter-search" placeholder="e.g. Developer, Google"
+                        style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem;">Position
+                        / Job Title</label>
+                    <input type="text" id="filter-position" list="positions-list" placeholder="e.g. Developer"
                         style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white;">
+                    <datalist id="positions-list"></datalist>
                 </div>
 
-                <!-- Skill Dropdown -->
-                <!-- Required Skill -->
+                <!-- Company -->
                 <div>
                     <label
-                        style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem;">Required
-                        Skill</label>
-                    <input type="text" id="filter-skill" list="skills-list" placeholder="e.g. React"
+                        style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem;">Company
+                        Name</label>
+                    <input type="text" id="filter-company" list="companies-list" placeholder="e.g. Google"
                         style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white;">
+                    <datalist id="companies-list"></datalist>
+                </div>
+
+                <!-- Required Skills -->
+                <div style="grid-column: 1 / -1;">
+                    <label
+                        style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem;">Required
+                        Skills (Optional)</label>
+                    <div style="display: flex; gap: 0.5rem; align-items: flex-end;">
+                        <input type="text" id="filter-skill-1" list="skills-list" placeholder="Skill 1 (e.g. React)"
+                            style="flex: 1; padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white;">
+                        <input type="text" id="filter-skill-2" list="skills-list" placeholder="Skill 2 (e.g. Node.js)"
+                            style="flex: 1; padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white;">
+                        <input type="text" id="filter-skill-3" list="skills-list" placeholder="Skill 3"
+                            style="flex: 1; padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white;">
+                    </div>
                     <datalist id="skills-list"></datalist>
                 </div>
 
@@ -210,6 +226,8 @@
 
                 const skillDatalist = document.getElementById('skills-list');
                 const locationDatalist = document.getElementById('locations-list');
+                const companiesDatalist = document.getElementById('companies-list');
+                const positionsDatalist = document.getElementById('positions-list');
 
                 if (filters.skills && filters.skills.length > 0) {
                     skillDatalist.innerHTML = filters.skills.map(s => `<option value="${s}">`).join('');
@@ -218,14 +236,25 @@
                 if (filters.locations && filters.locations.length > 0) {
                     locationDatalist.innerHTML = filters.locations.map(l => `<option value="${l}">`).join('');
                 }
+
+                if (filters.companies && filters.companies.length > 0) {
+                    companiesDatalist.innerHTML = filters.companies.map(c => `<option value="${c}">`).join('');
+                }
+
+                if (filters.positions && filters.positions.length > 0) {
+                    positionsDatalist.innerHTML = filters.positions.map(p => `<option value="${p}">`).join('');
+                }
             } catch (error) {
                 console.error('Error loading filters:', error);
             }
         }
 
         function clearFilters() {
-            if (document.getElementById('filter-search')) document.getElementById('filter-search').value = '';
-            if (document.getElementById('filter-skill')) document.getElementById('filter-skill').value = '';
+            if (document.getElementById('filter-position')) document.getElementById('filter-position').value = '';
+            if (document.getElementById('filter-company')) document.getElementById('filter-company').value = '';
+            if (document.getElementById('filter-skill-1')) document.getElementById('filter-skill-1').value = '';
+            if (document.getElementById('filter-skill-2')) document.getElementById('filter-skill-2').value = '';
+            if (document.getElementById('filter-skill-3')) document.getElementById('filter-skill-3').value = '';
             if (document.getElementById('filter-location')) document.getElementById('filter-location').value = '';
             if (document.getElementById('filter-min-salary')) document.getElementById('filter-min-salary').value = '';
             if (document.getElementById('filter-max-salary')) document.getElementById('filter-max-salary').value = '';
@@ -235,15 +264,27 @@
         async function loadJobs() {
             try {
                 // Gather filters
-                const search = document.getElementById('filter-search')?.value || '';
-                const skill = document.getElementById('filter-skill')?.value || '';
+                const position = document.getElementById('filter-position')?.value || '';
+                const company = document.getElementById('filter-company')?.value || '';
+
+                const skill1 = document.getElementById('filter-skill-1')?.value || '';
+                const skill2 = document.getElementById('filter-skill-2')?.value || '';
+                const skill3 = document.getElementById('filter-skill-3')?.value || '';
+
+                const skillsArray = [skill1, skill2, skill3].filter(s => s.trim() !== '');
+
                 const location = document.getElementById('filter-location')?.value || '';
                 const minSalary = document.getElementById('filter-min-salary')?.value || '';
                 const maxSalary = document.getElementById('filter-max-salary')?.value || '';
 
                 const queryParams = new URLSearchParams();
-                if (search) queryParams.append('search', search);
-                if (skill) queryParams.append('skill', skill);
+                if (position) queryParams.append('position', position);
+                if (company) queryParams.append('company', company);
+
+                if (skillsArray.length > 0) {
+                    queryParams.append('skill', skillsArray.join(', '));
+                }
+
                 if (location) queryParams.append('location', location);
                 if (minSalary) queryParams.append('minSalary', minSalary);
                 if (maxSalary) queryParams.append('maxSalary', maxSalary);
