@@ -318,6 +318,33 @@ exports.getPublicProfile = async (req, res) => {
         const eduQuery = await pool.query('SELECT * FROM candidate_education WHERE candidate_id = $1 ORDER BY start_date DESC', [candidateId]);
         const projQuery = await pool.query('SELECT * FROM candidate_project WHERE candidate_id = $1 ORDER BY start_date DESC', [candidateId]);
 
+        // Fetch skills
+        const skillsQuery = await pool.query(`
+            SELECT s.skill_name 
+            FROM candidate_skill cs
+            JOIN skill s ON cs.skill_id = s.skill_id
+            WHERE cs.candidate_id = $1
+            ORDER BY cs.is_primary DESC, s.skill_name ASC
+        `, [candidateId]);
+
+        let skills = skillsQuery.rows.map(row => row.skill_name);
+
+        // If there are custom skills (skill_id = 0), we might need to fetch custom_skill_name from cs.
+        // Let's ensure we grab custom_skill_name if skill_id is 0 or skill_name is 'Other'
+        const customSkillsQuery = await pool.query(`
+            SELECT custom_skill_name 
+            FROM candidate_skill 
+            WHERE candidate_id = $1 AND (skill_id = 0 OR custom_skill_name IS NOT NULL)
+        `, [candidateId]);
+
+        customSkillsQuery.rows.forEach(row => {
+            if (row.custom_skill_name && !skills.includes(row.custom_skill_name)) {
+                skills.push(row.custom_skill_name);
+            }
+        });
+
+        profile.skills = skills;
+
         const responseData = {
             profile: profile,
             sections: {

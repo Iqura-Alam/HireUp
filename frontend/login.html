@@ -9,25 +9,29 @@
 </head>
 
 <body>
-    <div class="container">
-        <h1
-            style="text-align: center; margin-bottom: 2rem; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 2.5rem;">
-            HireUp</h1>
-        <h2 style="font-weight: 500; font-size: 1.5rem; margin-bottom: 1.5rem;">Welcome Back</h2>
-        <div id="error-message" class="error-message"></div>
-        <form onsubmit="login(event)">
-            <div class="form-group">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" placeholder="you@example.com" required>
+    <div class="auth-split-layout">
+        <div class="auth-split-left">
+            <h1>HireUp</h1>
+        </div>
+        <div class="auth-split-right">
+            <div class="container">
+                <h2 style="font-weight: 500; font-size: 1.5rem; margin-bottom: 1.5rem; text-align: center;">Welcome</h2>
+                <div id="error-message" class="error-message"></div>
+                <form onsubmit="login(event)">
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" placeholder="you@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit">Sign In</button>
+                </form>
+                <div class="link">
+                    Don't have an account? <a href="register.html">Sign Up</a>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" placeholder="••••••••" required>
-            </div>
-            <button type="submit">Sign In</button>
-        </form>
-        <div class="link">
-            Don't have an account? <a href="register.html">Sign Up</a>
         </div>
     </div>
     <script src="js/auth.js"></script>

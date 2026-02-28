@@ -109,6 +109,51 @@ async function loadJobs() {
     }
 }
 
+async function loadMostAppliedJobs() {
+    try {
+        const res = await fetch(`${API_BASE}/most-applied-jobs`, {
+            headers: { 'x-auth-token': localStorage.getItem('token') }
+        });
+        const jobs = await res.json();
+
+        const list = document.getElementById('jobs-list');
+        list.innerHTML = '';
+
+        if (jobs.length === 0) {
+            list.innerHTML = '<p style="color: var(--text-muted);">No jobs posted yet.</p>';
+            return;
+        }
+
+        jobs.forEach((job, index) => {
+            const div = document.createElement('div');
+            div.className = 'job-card';
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div style="display: flex; gap: 1rem; align-items:flex-start;">
+                        <h2 style="color: var(--primary-color); margin: 0;">#${index + 1}</h2>
+                        <div>
+                            <h4 style="margin-top:0;">${job.title}</h4>
+                            <p style="font-size: 0.9rem; color: var(--text-muted);">${job.location} | ${job.salary_range || 'Salary Neg.'}</p>
+                            <p style="font-size: 0.9rem; margin-top: 0.5rem;">${job.description.substring(0, 100)}...</p>
+                            <small style="color: ${new Date(job.expires_at) < new Date() ? 'red' : 'green'}">
+                                Expires: ${new Date(job.expires_at).toLocaleDateString()}
+                            </small>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="display:block; font-size: 1.5rem; font-weight: bold; color: #10b981;">${job.application_count}</span>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">Applicants</span>
+                        <button onclick="viewApplications(${job.job_id})" class="btn" style="margin-top: 0.5rem; font-size: 0.8rem; padding: 0.5rem 1rem;">View Applicants</button>
+                    </div>
+                </div>
+            `;
+            list.appendChild(div);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
 
 let skillSelectInstance = null;
 
@@ -248,11 +293,21 @@ async function viewApplications(jobId) {
                     answersHtml += '</div>';
                 }
 
+                let skillsHtml = '';
+                if (app.skills && app.skills.length > 0) {
+                    skillsHtml = '<div style="margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.25rem;">';
+                    app.skills.forEach(skill => {
+                        skillsHtml += `<span style="background: rgba(168, 85, 247, 0.1); color: var(--primary-color); border: 1px solid rgba(168, 85, 247, 0.3); font-size: 0.75rem; padding: 0.1rem 0.4rem; border-radius: 4px;">${skill}</span>`;
+                    });
+                    skillsHtml += '</div>';
+                }
+
                 div.innerHTML = `
                     <div>
                         <strong>${app.full_name}</strong> (${app.email})<br>
                         <small>Exp: ${app.experience_years} Years</small><br>
                         <small>Applied: ${new Date(app.applied_at).toLocaleDateString()}</small><br>
+                        ${skillsHtml}
                         <div style="margin-top: 0.5rem; display: flex; gap: 1rem;">
                             <a href="profile.html?type=candidate&id=${app.candidate_id}" style="color: var(--primary-color); font-size: 0.9rem; text-decoration: underline;">View Profile</a>
                             <a href="javascript:void(0)" onclick="downloadCV(${app.application_id})" style="color: var(--primary-color); font-size: 0.9rem; text-decoration: underline;">Download CV</a>

@@ -19,7 +19,7 @@
             background-image: var(--bg-mesh);
             background-attachment: fixed;
             background-size: cover;
-            color: var(--text-main);
+            color: white; color: var(--text-main);
             min-height: 100vh;
             margin: 0;
             padding: 0;
@@ -72,14 +72,14 @@
         }
 
         .nav-link:hover {
-            background: rgba(255, 255, 255, 0.05);
-            color: white;
+            background: rgba(0, 0, 0, 0.02);
+            color: var(--text-main);
             transform: translateX(8px);
         }
 
         .nav-link.active {
             background: var(--primary-gradient);
-            color: white;
+            color: var(--text-main);
             box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
             border-color: rgba(255, 255, 255, 0.1);
         }
@@ -197,7 +197,7 @@
 
         .btn-logout:hover {
             background: #ef4444;
-            color: white;
+            color: var(--text-main);
             box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
         }
 

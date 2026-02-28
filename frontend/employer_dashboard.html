@@ -75,13 +75,16 @@
 <body>
     <!-- Navbar -->
     <nav
-        style="padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; background: rgba(30, 30, 46, 0.8); backdrop-filter: blur(10px);">
+        style="padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; background: rgba(255, 255, 255, 0.45); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);">
         <h2
             style="margin: 0; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.8rem;">
             HireUp <span style="font-size: 1rem; color: var(--text-muted);">Employer</span>
         </h2>
         <div style="display: flex; align-items: center; gap: 1rem;">
             <span id="nav-username" style="font-weight: 600; color: var(--text-main);">Company</span>
+            <a href="employer_most_applied.html" class="btn"
+                style="background: transparent; border: 1px solid var(--primary-color); color: var(--primary-color); width: auto; padding: 0.5rem 1rem;">⭐
+                Most Applied Jobs</a>
             <button onclick="logout()" class="btn"
                 style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); width: auto; padding: 0.5rem 1rem;">Logout</button>
         </div>
@@ -117,8 +120,10 @@
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                 <h2 style="margin: 0;">Job Postings</h2>
-                <button id="btn-post-job" onclick="openPostJob()" class="btn"
-                    style="width: auto; padding: 0.75rem 2rem; display: none;">+ Post New Job</button>
+                <div>
+                    <button id="btn-post-job" onclick="openPostJob()" class="btn"
+                        style="width: auto; padding: 0.75rem 2rem; display: none;">+ Post New Job</button>
+                </div>
             </div>
 
             <div id="jobs-list">
@@ -178,7 +183,7 @@
                 <div class="form-group">
                     <label>Description</label>
                     <textarea id="job-desc" rows="4"
-                        style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: white; padding: 0.5rem;"
+                        style="width: 100%; background: rgba(0, 0, 0, 0.02); border: 1px solid var(--glass-border); color: var(--text-main); padding: 0.5rem;"
                         required></textarea>
                 </div>
                 <div class="form-group">
@@ -227,7 +232,7 @@
             <div style="display: flex; justify-content: space-between;">
                 <h3>Applicants</h3>
                 <button onclick="closeModal('applicantsModal')"
-                    style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">&times;</button>
+                    style="background:none; border:none; color: var(--text-main); font-size:1.5rem; cursor:pointer;">&times;</button>
             </div>
             <div id="applicants-list">
                 <!-- Loaded via JS -->

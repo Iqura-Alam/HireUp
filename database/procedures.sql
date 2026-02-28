@@ -156,9 +156,7 @@ BEGIN
 END;
 $$;
 
----------------------------------------------------------
 -- PROFILE MANAGEMENT
----------------------------------------------------------
 
 -- 1. Atomic Profile Update
 CREATE OR REPLACE PROCEDURE sp_update_candidate_profile(
