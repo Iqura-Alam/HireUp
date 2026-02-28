@@ -26,7 +26,8 @@ function showView(viewId, element) {
         'verification': 'Verification Queue',
         'users': 'User Management',
         'audit': 'System Audit Logs',
-        'alerts': 'Low-Rated Course Alerts'
+        'alerts': 'Low-Rated Course Alerts',
+        'jobs': 'Job Management'
     };
     document.getElementById('view-title').innerText = titles[viewId] || 'Admin Dashboard';
 }
@@ -38,11 +39,11 @@ async function loadTopSkills() {
         const response = await fetch(`${ADMIN_API}/top-skills`, { headers: { 'x-auth-token': token } });
         const data = await response.json();
         if (response.ok) {
-            let html = '<ul>';
+            let html = '<table><tr><th>Skill Name</th><th>Job Demand</th><th>Candidate Supply</th></tr>';
             data.forEach(item => {
-                html += `<li>${item.skill_name} (Demand: ${item.demand_count})</li>`;
+                html += `<tr><td>${item.skill_name}</td><td style="color:#a855f7; font-weight:bold;">${item.demand_count}</td><td style="color:#10b981; font-weight:bold;">${item.supply_count}</td></tr>`;
             });
-            html += '</ul>';
+            html += '</table>';
             div.innerHTML = html;
         } else {
             div.innerHTML = 'Error loading data';
@@ -294,6 +295,55 @@ async function deleteCourse(courseId) {
     } catch (e) { console.error(e); alert('Error deleting course'); }
 }
 
+// Job Management
+async function loadAllJobs() {
+    const div = document.getElementById('jobs-management-list');
+    const token = localStorage.getItem('token');
+    try {
+        const response = await fetch(`${ADMIN_API}/jobs`, { headers: { 'x-auth-token': token } });
+        const data = await response.json();
+        if (response.ok) {
+            if (data.length === 0) {
+                div.innerHTML = '<p style="color: var(--text-muted);">No job postings found.</p>';
+                return;
+            }
+            let html = '<table><tr><th>Title</th><th>Company</th><th>Status</th><th>Applications</th><th>Format/Loc</th><th>Posted</th><th>Actions</th></tr>';
+            data.forEach(job => {
+                const statusColor = job.status === 'Open' ? '#10b981' : (job.status === 'Closed' ? '#f87171' : '#eab308');
+                html += `<tr>
+                    <td>${job.title}</td>
+                    <td>${job.company_name}</td>
+                    <td style="color: ${statusColor}; font-weight: bold;">${job.status}</td>
+                    <td>${job.application_count}</td>
+                    <td>${job.location || 'Remote'}</td>
+                    <td>${new Date(job.created_at).toLocaleDateString()}</td>
+                    <td>
+                        <button onclick="deleteJobAdmin(${job.job_id})" style="background-color: #ef4444; width: auto; padding: 5px 10px;">Delete</button>
+                    </td>
+                </tr>`;
+            });
+            html += '</table>';
+            div.innerHTML = html;
+        } else {
+            div.innerHTML = 'Error loading jobs';
+        }
+    } catch (e) { console.error(e); div.innerHTML = 'Error'; }
+}
+
+async function deleteJobAdmin(jobId) {
+    if (!confirm('Are you sure you want to PERMANENTLY delete this job posting?')) return;
+    const token = localStorage.getItem('token');
+    try {
+        const response = await fetch(`${ADMIN_API}/jobs/${jobId}`, {
+            method: 'DELETE',
+            headers: { 'x-auth-token': token }
+        });
+        const data = await response.json();
+        alert(data.message);
+        loadAllJobs();
+    } catch (e) { console.error(e); alert('Error deleting job'); }
+}
+
 // Init
 document.addEventListener('DOMContentLoaded', () => {
     loadVerificationQueue();
@@ -302,4 +352,5 @@ document.addEventListener('DOMContentLoaded', () => {
     loadPopularCourses();
     loadAuditLogs();
     loadLowRatedCourses();
+    loadAllJobs();
 });

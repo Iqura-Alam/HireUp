@@ -21,6 +21,8 @@
         <div style="display: flex; align-items: center; gap: 1rem;">
             <button onclick="window.location.href='jobs.html'" class="btn"
                 style="background: var(--primary-color); width: auto; padding: 0.5rem 1rem;">Jobs</button>
+            <button onclick="window.location.href='recommended-jobs.html'" class="btn"
+                style="background: #10b981; width: auto; padding: 0.5rem 1rem;">Recommended</button>
             <button onclick="window.location.href='courses.html'" class="btn"
                 style="background: #a855f7; width: auto; padding: 0.5rem 1rem;">Courses</button>
 
@@ -34,12 +36,11 @@
     <div class="dashboard-container">
 
         <!-- SKELETON LOADER (Initially Visible) -->
-        <div id="skeleton-loader"
-            style="grid-column: 1 / -1; display: grid; grid-template-columns: 320px 1fr; gap: 2rem;">
-            <div class="left-col">
-                <div class="card" style="height: 400px; background: #f0f0f0; animation: pulse 1.5s infinite;"></div>
+        <div id="skeleton-loader" style="display: flex; flex-wrap: wrap; gap: 2rem; width: 100%;">
+            <div class="card"
+                style="flex: 1; min-width: 300px; height: 400px; background: #f0f0f0; animation: pulse 1.5s infinite;">
             </div>
-            <div class="right-col">
+            <div style="flex: 2; display: flex; flex-direction: column; gap: 2rem;">
                 <div class="card"
                     style="height: 150px; background: #f0f0f0; animation: pulse 1.5s infinite; margin-bottom: 2rem;">
                 </div>
@@ -48,12 +49,13 @@
         </div>
 
         <!-- ACTUAL CONTENT (Hidden until loaded) -->
-        <div id="dashboard-content" style="display: none;">
-            <!-- Left Column: Profile Info -->
-            <div class="left-col">
+        <div id="dashboard-content" style="display: none; flex-wrap: wrap; gap: 2rem; width: 100%; align-items: start;">
 
+            <!-- Left Column Content -> Now flex items -->
+
+            <div style="display: flex; flex-direction: column; gap: 2rem; flex: 1; min-width: 320px;">
                 <!-- Profile Completion Widget -->
-                <div class="card" style="margin-bottom: 2rem; border-left: 5px solid var(--primary-color);">
+                <div class="card" style="border-left: 5px solid var(--primary-color);">
                     <h3>Profile Strength</h3>
                     <div style="background: #e2e8f0; border-radius: 10px; height: 10px; margin: 1rem 0;">
                         <div id="progress-bar"
@@ -109,37 +111,10 @@
                     </div>
                 </div>
 
-                <!-- Job Preferences Widget -->
-                <div class="card" style="margin-top: 2rem;">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <h3 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0;">
-                            <span style="font-size: 1.2rem;">🎯</span> Job Preferences
-                        </h3>
-                        <button onclick="openEditPreferencesModal()" class="btn"
-                            style="width: auto; padding: 0.25rem 0.75rem; font-size: 0.8rem;">Edit</button>
-                    </div>
-
-                    <div style="font-size: 0.9rem; line-height: 1.6;">
-                        <p><strong style="color: var(--text-muted);">Desired Role:</strong> <span id="pref-role">Not
-                                specified</span></p>
-                        <p><strong style="color: var(--text-muted);">Employment Type:</strong> <span id="pref-type">Not
-                                specified</span></p>
-                        <p><strong style="color: var(--text-muted);">Work Mode:</strong> <span id="pref-mode">Not
-                                specified</span></p>
-                        <p><strong style="color: var(--text-muted);">Expected Salary:</strong> <span
-                                id="pref-salary">Not specified</span></p>
-                        <p><strong style="color: var(--text-muted);">Notice Period:</strong> <span id="pref-notice">Not
-                                specified</span></p>
-                        <p><strong style="color: var(--text-muted);">Willing to Relocate:</strong> <span
-                                id="pref-relocate">Not specified</span></p>
-                    </div>
-                </div>
-
                 <!-- Top Skills Widget -->
-                <div class="card" style="margin-top: 2rem;">
+                <div class="card" style="margin-bottom: 1.5rem;">
                     <h3 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                        <span style="font-size: 1.2rem;">🔥</span> Top In-Demand Skills
+                        <span style="font-size: 1.2rem;"></span>Top In-Demand Skills
                     </h3>
                     <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">Most requested by
                         employers this month.</p>
@@ -149,13 +124,15 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- These will be moved to the right column -->
             </div>
 
             <!-- Right Column: Skills & content -->
-            <div class="right-col">
+            <div class="right-col" style="columns: 2 350px; gap: 1.5rem; flex: 2; min-width: 600px;">
 
                 <!-- Experience Section -->
-                <div class="card">
+                <div class="card" style="break-inside: avoid; margin-bottom: 1.5rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <h3>Experience</h3>
                         <button onclick="openAddExperienceModal()" class="btn"
@@ -167,7 +144,7 @@
                 </div>
 
                 <!-- Education Section -->
-                <div class="card">
+                <div class="card" style="break-inside: avoid; margin-bottom: 1.5rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <h3>Education</h3>
                         <button onclick="openAddEducationModal()" class="btn"
@@ -178,8 +155,10 @@
                     </div>
                 </div>
 
+
+
                 <!-- Projects Section -->
-                <div class="card">
+                <div class="card" style="break-inside: avoid; margin-bottom: 1.5rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <h3>Projects</h3>
                         <button onclick="openAddProjectModal()" class="btn"
@@ -191,7 +170,7 @@
                 </div>
 
                 <!-- Skills Section -->
-                <div class="card">
+                <div class="card" style="break-inside: avoid; margin-bottom: 1.5rem;">
                     <h3>Skills</h3>
                     <div id="skills-list" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
                         <p style="color: var(--text-muted);">Loading skills...</p>
@@ -225,8 +204,37 @@
                     </div>
                 </div>
 
+                <!-- Job Preferences Widget -->
+                <div class="card" style="break-inside: avoid; margin-bottom: 1.5rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0;">
+                            <span style="font-size: 1.2rem;"></span>Job Preferences
+                        </h3>
+                        <button onclick="openEditPreferencesModal()" class="btn"
+                            style="width: auto; padding: 0.25rem 0.75rem; font-size: 0.8rem;">Edit</button>
+                    </div>
+
+                    <div style="font-size: 0.9rem; line-height: 1.6;">
+                        <p><strong style="color: var(--text-muted);">Desired Role:</strong> <span id="pref-role">Not
+                                specified</span></p>
+                        <p><strong style="color: var(--text-muted);">Employment Type:</strong> <span id="pref-type">Not
+                                specified</span></p>
+                        <p><strong style="color: var(--text-muted);">Work Mode:</strong> <span id="pref-mode">Not
+                                specified</span></p>
+                        <p><strong style="color: var(--text-muted);">Expected Salary:</strong> <span
+                                id="pref-salary">Not specified</span></p>
+                        <p><strong style="color: var(--text-muted);">Notice Period:</strong> <span id="pref-notice">Not
+                                specified</span></p>
+                        <p><strong style="color: var(--text-muted);">Willing to Relocate:</strong> <span
+                                id="pref-relocate">Not specified</span></p>
+                    </div>
+                </div>
+
+
+
                 <!-- Enrollments -->
-                <div class="card">
+                <div class="card" style="flex: 1; min-width: 350px;">
                     <h3>Course Enrollments</h3>
                     <div id="enrollments-list">
                         <p style="color: var(--text-muted);">No active enrollments.</p>
@@ -401,8 +409,9 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="exp-current"> I currently work here
+                    <label
+                        style="display: flex; align-items: center; gap: 0.5rem; font-weight: normal; margin-bottom: 0;">
+                        <input type="checkbox" id="exp-current" style="width: auto; margin: 0;"> I currently work here
                     </label>
                 </div>
                 <div class="form-group">

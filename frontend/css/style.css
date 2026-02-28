@@ -74,6 +74,65 @@ body>.container {
     /* Center in flex body */
 }
 
+/* Auth Split Layout */
+.auth-split-layout {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+    align-items: center;
+}
+
+.auth-split-left {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.auth-split-left h1 {
+    font-size: 5rem;
+    font-weight: 700;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center;
+    line-height: 1.2;
+    margin: 0;
+}
+
+.auth-split-right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.auth-split-right .container {
+    width: 100%;
+    max-width: 440px;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .auth-split-layout {
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .auth-split-left {
+        flex: 0;
+        padding-bottom: 0;
+    }
+
+    .auth-split-left h1 {
+        font-size: 3.5rem;
+        margin-top: 2rem;
+    }
+}
+
 /* Forms */
 .form-group {
     margin-bottom: 1.25rem;
@@ -161,12 +220,10 @@ a:hover {
 }
 
 .error-message {
-    background: rgba(239, 68, 68, 0.2);
-    border: 1px solid rgba(239, 68, 68, 0.5);
+    background: transparent;
     color: #fca5a5;
-    padding: 0.75rem;
-    border-radius: 8px;
-    margin-bottom: 1.5rem;
+    padding: 0.5rem 0;
+    margin-bottom: 1rem;
     text-align: center;
     font-size: 0.9rem;
 }
@@ -238,11 +295,11 @@ nav {
    Dashboard Layout 
    ========================================= */
 .dashboard-container {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 2rem auto;
     padding: 0 1rem;
-    display: grid;
-    grid-template-columns: 320px 1fr;
+    display: flex;
+    flex-wrap: wrap;
     gap: 2rem;
     align-items: start;
 }
@@ -250,7 +307,7 @@ nav {
 /* Responsive: Stack on mobile */
 @media (max-width: 768px) {
     .dashboard-container {
-        grid-template-columns: 1fr;
+        flex-direction: column;
     }
 }
 

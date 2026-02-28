@@ -13,6 +13,7 @@ router.get('/public/:id', auth, employerController.getPublicEmployerProfile);
 
 router.post('/jobs', auth, employerController.postJob);
 router.get('/jobs', auth, employerController.getJobs);
+router.get('/most-applied-jobs', auth, employerController.getMostAppliedJobs);
 router.get('/jobs/:jobId/applications', auth, employerController.getJobApplications);
 
 router.put('/applications/:applicationId/shortlist', auth, employerController.shortlistApplication);

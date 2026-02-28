@@ -91,6 +91,26 @@ exports.getJobs = async (req, res) => {
     }
 };
 
+exports.getMostAppliedJobs = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const employerId = await getEmployerId(userId);
+
+        const result = await pool.query(`
+            SELECT j.*, 
+            (SELECT COUNT(*) FROM application a WHERE a.job_id = j.job_id) as application_count
+            FROM job j
+            WHERE j.employer_id = $1
+            ORDER BY application_count DESC, j.created_at DESC
+        `, [employerId]);
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
 exports.getJobApplications = async (req, res) => {
     try {
         const { jobId } = req.params;
@@ -117,7 +137,13 @@ exports.getJobApplications = async (req, res) => {
                        FROM application_answer aa
                        JOIN job_question jq ON jq.question_id = aa.question_id
                        WHERE aa.application_id = a.application_id
-                   ) as answers
+                   ) as answers,
+                   (
+                       SELECT jsonb_agg(s.skill_name)
+                       FROM candidate_skill cs
+                       JOIN skill s ON cs.skill_id = s.skill_id
+                       WHERE cs.candidate_id = cp.candidate_id
+                   ) as skills
             FROM application a
             JOIN candidate_profile cp ON cp.candidate_id = a.candidate_id
             JOIN users u ON u.user_id = cp.candidate_id

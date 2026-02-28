@@ -3,9 +3,7 @@ let tomSelectInstance;
 let currentProfile = null;
 let currentSections = {};
 
-// ==========================================
 // Initialization & Data Fetching
-// ==========================================
 async function loadDashboardData() {
     console.log('Loading dashboard...');
     const token = localStorage.getItem('token');

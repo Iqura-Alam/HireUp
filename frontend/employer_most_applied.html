@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HireUp - Most Applied Jobs</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .job-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+
+        .job-card h4 {
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .applicant-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: #1e1e2e;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid var(--primary-color);
+            width: 80%;
+            max-width: 600px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav
+        style="padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; background: rgba(255, 255, 255, 0.45); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);">
+        <h2
+            style="margin: 0; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.8rem;">
+            HireUp <span style="font-size: 1rem; color: var(--text-muted);">Employer Dashboard</span>
+        </h2>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <a href="employer_dashboard.html" class="btn"
+                style="background: transparent; border: 1px solid var(--text-muted); width: auto; padding: 0.5rem 1rem;">←
+                Back to Dashboard</a>
+            <button onclick="logout()" class="btn"
+                style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); width: auto; padding: 0.5rem 1rem;">Logout</button>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <!-- Main Content -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h2 style="margin: 0;">Most Applied Jobs Rank</h2>
+        </div>
+
+        <div id="jobs-list">
+            <p style="color: var(--text-muted);">Loading jobs...</p>
+        </div>
+    </div>
+
+    <!-- Applicants Modal -->
+    <div id="applicantsModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div style="display: flex; justify-content: space-between;">
+                <h3>Applicants</h3>
+                <button onclick="closeModal('applicantsModal')"
+                    style="background:none; border:none; color: var(--text-main); font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div id="applicants-list">
+                <!-- Loaded via JS -->
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/employer.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            loadMostAppliedJobs();
+        });
+    </script>
+</body>
+
+</html>

@@ -48,6 +48,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 router.get('/jobs', auth, candidateController.getAllJobs);
+router.get('/job-filters', auth, candidateController.getJobFilters);
 router.get('/jobs/:jobId', auth, candidateController.getJobDetails);
 router.post('/jobs/:jobId/apply', [auth, upload.single('cv')], candidateController.applyForJob);
 
@@ -58,6 +59,7 @@ router.post('/courses/:courseId/review', auth, candidateController.addCourseRevi
 router.get('/courses/:courseId/reviews', auth, candidateController.getCourseReviews);
 router.get('/my-enrollments', auth, candidateController.getMyEnrollments);
 router.get('/recommended-courses', auth, candidateController.getRecommendedCourses);
+router.get('/recommended-jobs', auth, candidateController.getRecommendedJobs);
 router.get('/top-skills', auth, candidateController.getTopSkills);
 
 module.exports = router;

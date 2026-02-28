@@ -19,7 +19,7 @@
             background-image: var(--bg-mesh);
             background-attachment: fixed;
             background-size: cover;
-            color: var(--text-main);
+            color: white; color: var(--text-main);
             min-height: 100vh;
             margin: 0;
             padding: 0;
@@ -72,14 +72,14 @@
         }
 
         .nav-link:hover {
-            background: rgba(255, 255, 255, 0.05);
-            color: white;
+            background: rgba(0, 0, 0, 0.02);
+            color: var(--text-main);
             transform: translateX(8px);
         }
 
         .nav-link.active {
             background: var(--primary-gradient);
-            color: white;
+            color: var(--text-main);
             box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
             border-color: rgba(255, 255, 255, 0.1);
         }
@@ -197,7 +197,7 @@
 
         .btn-logout:hover {
             background: #ef4444;
-            color: white;
+            color: var(--text-main);
             box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
         }
 
@@ -249,6 +249,9 @@
             <div class="nav-link" onclick="showView('alerts', this)" style="border-left: 3px solid #f87171;">
                 <span class="icon">⚠️</span> Course Alerts
             </div>
+            <div class="nav-link" onclick="showView('jobs', this)">
+                <span class="icon">💼</span> Jobs
+            </div>
         </div>
     </div>
 
@@ -262,7 +265,7 @@
         <div id="view-overview" class="view-section active">
             <div class="stats-grid">
                 <div class="glass-panel">
-                    <h3 style="margin-bottom: 2rem; color: #a855f7;">Top Skills Demand</h3>
+                    <h3 style="margin-bottom: 2rem; color: #a855f7;">Skills Supply vs Demand Report</h3>
                     <div id="top-skills-list">Loading...</div>
                 </div>
                 <div class="glass-panel">
@@ -313,6 +316,16 @@
                     <p style="color: var(--text-muted); font-size: 0.9rem;">Courses with average rating below 2.0</p>
                 </div>
                 <div id="course-alerts-list">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Job Management View -->
+        <div id="view-jobs" class="view-section">
+            <div class="glass-panel">
+                <div class="section-header">
+                    <h3 style="margin: 0;">Job Postings Management</h3>
+                </div>
+                <div id="jobs-management-list">Loading...</div>
             </div>
         </div>
     </div>

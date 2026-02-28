@@ -57,8 +57,11 @@ exports.addSkill = async (req, res) => {
 };
 
 exports.getAllJobs = async (req, res) => {
+    const userId = req.user.id;
+    const { company, position, skill, location, minSalary, maxSalary, minExperience } = req.query;
+
     try {
-        const result = await pool.query(`
+        let query = `
             SELECT j.*, e.company_name, e.industry, e.location as company_location, e.website as company_website,
             (
                 SELECT jsonb_agg(s.skill_name)
@@ -71,12 +74,96 @@ exports.getAllJobs = async (req, res) => {
             JOIN employer e ON e.employer_id = j.employer_id
             LEFT JOIN application a ON a.job_id = j.job_id AND a.candidate_id = (SELECT candidate_id FROM candidate_profile WHERE candidate_id = $1)
             WHERE j.status = 'Open' AND j.expires_at >= CURRENT_DATE
-            ORDER BY j.created_at DESC
-        `, [req.user.id]);
+        `;
+        const params = [userId];
+        let pIndex = 2;
 
-        res.json(result.rows);
+        if (company) {
+            query += ` AND e.company_name ILIKE $${pIndex}`;
+            params.push(`%${company}%`);
+            pIndex++;
+        }
+
+        if (position) {
+            query += ` AND j.title ILIKE $${pIndex}`;
+            params.push(`%${position}%`);
+            pIndex++;
+        }
+
+        if (skill) {
+            let skillList = [];
+            if (Array.isArray(skill)) {
+                skillList = skill;
+            } else if (typeof skill === 'string') {
+                skillList = skill.split(',').map(s => s.trim()).filter(s => s);
+            }
+
+            if (skillList.length > 0) {
+                // We use ILIKE ANY looking for any of the skills provided
+                query += ` AND EXISTS (
+                    SELECT 1 FROM job_requirement jr2
+                    JOIN skill s2 ON s2.skill_id = jr2.skill_id
+                    WHERE jr2.job_id = j.job_id AND s2.skill_name ILIKE ANY($${pIndex}::text[])
+                )`;
+                params.push(skillList);
+                pIndex++;
+            }
+        }
+
+        if (location) {
+            query += ` AND j.location ILIKE $${pIndex}`;
+            params.push(`%${location}%`);
+            pIndex++;
+        }
+
+        query += ` ORDER BY j.created_at DESC`;
+
+        const result = await pool.query(query, params);
+        let jobs = result.rows;
+
+        // Parse salary strings to handle range filtering in code
+        // e.g. "50k-80k", "150k+", "Negotiable"
+        const maxSalaryArg = req.query.maxSalary;
+        const minSalaryArg = req.query.minSalary;
+
+        if (minSalaryArg || maxSalaryArg) {
+            const reqMin = minSalaryArg ? parseInt(minSalaryArg) : 0;
+            const reqMax = maxSalaryArg ? parseInt(maxSalaryArg) : Infinity;
+
+            jobs = jobs.filter(job => {
+                const range = job.salary_range ? job.salary_range.toLowerCase() : '';
+
+                // If it's negotiable or undefined, it's safer to not filter it out entirely, 
+                // but usually strictly filtered things drop "Negotiable". Let's drop it if strict min/max are provided.
+                if (range.includes('negotiable') || !range) return false;
+
+                let jobMin = 0;
+                let jobMax = Infinity;
+
+                if (range.includes('-')) {
+                    const parts = range.split('-');
+                    jobMin = parseInt(parts[0]) * (parts[0].includes('k') ? 1000 : 1);
+                    jobMax = parseInt(parts[1]) * (parts[1].includes('k') ? 1000 : 1);
+                } else if (range.includes('+')) {
+                    jobMin = parseInt(range) * (range.includes('k') ? 1000 : 1);
+                } else {
+                    jobMin = parseInt(range) * (range.includes('k') ? 1000 : 1);
+                    jobMax = jobMin; // single literal value
+                }
+
+                if (isNaN(jobMin)) jobMin = 0;
+                if (isNaN(jobMax)) jobMax = Infinity;
+
+                // We want jobs that overlap with the requested range
+                // A job's range [jobMin, jobMax] overlaps [reqMin, reqMax] if:
+                // jobMin <= reqMax AND jobMax >= reqMin
+                return (jobMin <= reqMax) && (jobMax >= reqMin);
+            });
+        }
+
+        res.json(jobs);
     } catch (error) {
-        console.error(error);
+        console.error('GetAllJobs Error:', error);
         res.status(500).json({ message: 'Server Error' });
     }
 };
@@ -230,6 +317,33 @@ exports.getPublicProfile = async (req, res) => {
         const expQuery = await pool.query('SELECT * FROM candidate_experience WHERE candidate_id = $1 ORDER BY start_date DESC', [candidateId]);
         const eduQuery = await pool.query('SELECT * FROM candidate_education WHERE candidate_id = $1 ORDER BY start_date DESC', [candidateId]);
         const projQuery = await pool.query('SELECT * FROM candidate_project WHERE candidate_id = $1 ORDER BY start_date DESC', [candidateId]);
+
+        // Fetch skills
+        const skillsQuery = await pool.query(`
+            SELECT s.skill_name 
+            FROM candidate_skill cs
+            JOIN skill s ON cs.skill_id = s.skill_id
+            WHERE cs.candidate_id = $1
+            ORDER BY cs.is_primary DESC, s.skill_name ASC
+        `, [candidateId]);
+
+        let skills = skillsQuery.rows.map(row => row.skill_name);
+
+        // If there are custom skills (skill_id = 0), we might need to fetch custom_skill_name from cs.
+        // Let's ensure we grab custom_skill_name if skill_id is 0 or skill_name is 'Other'
+        const customSkillsQuery = await pool.query(`
+            SELECT custom_skill_name 
+            FROM candidate_skill 
+            WHERE candidate_id = $1 AND (skill_id = 0 OR custom_skill_name IS NOT NULL)
+        `, [candidateId]);
+
+        customSkillsQuery.rows.forEach(row => {
+            if (row.custom_skill_name && !skills.includes(row.custom_skill_name)) {
+                skills.push(row.custom_skill_name);
+            }
+        });
+
+        profile.skills = skills;
 
         const responseData = {
             profile: profile,
@@ -563,6 +677,19 @@ exports.getRecommendedCourses = async (req, res) => {
     }
 };
 
+exports.getRecommendedJobs = async (req, res) => {
+    const candidateId = req.user.id;
+    try {
+        const result = await pool.query(
+            'SELECT * FROM fn_recommend_jobs($1)', [candidateId]
+        );
+        res.json(result.rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
 exports.getCourseFilters = async (req, res) => {
     try {
         // Get ALL available skills for the filter
@@ -624,6 +751,54 @@ exports.getTopSkills = async (req, res) => {
         res.json(result.rows);
     } catch (error) {
         console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+exports.getJobFilters = async (req, res) => {
+    try {
+        // Fetch ALL skills for dropdown autocomplete
+        const skillsQuery = await pool.query(`
+            SELECT DISTINCT skill_name 
+            FROM skill 
+            ORDER BY skill_name ASC
+        `);
+
+        // Get unique job posting locations for open jobs
+        const locationsQuery = await pool.query(`
+            SELECT DISTINCT j.location 
+            FROM job j
+            WHERE j.status = 'Open' AND j.expires_at >= CURRENT_DATE
+            AND j.location IS NOT NULL
+            ORDER BY j.location ASC
+        `);
+
+        // Get unique company names for open jobs
+        const companiesQuery = await pool.query(`
+            SELECT DISTINCT e.company_name 
+            FROM employer e
+            JOIN job j ON j.employer_id = e.employer_id
+            WHERE j.status = 'Open' AND j.expires_at >= CURRENT_DATE
+            AND e.company_name IS NOT NULL
+            ORDER BY e.company_name ASC
+        `);
+
+        // Get unique job titles for open jobs
+        const positionsQuery = await pool.query(`
+            SELECT DISTINCT title 
+            FROM job 
+            WHERE status = 'Open' AND expires_at >= CURRENT_DATE
+            ORDER BY title ASC
+        `);
+
+        res.json({
+            skills: skillsQuery.rows.map(r => r.skill_name),
+            locations: locationsQuery.rows.map(r => r.location),
+            companies: companiesQuery.rows.map(r => r.company_name),
+            positions: positionsQuery.rows.map(r => r.title)
+        });
+    } catch (error) {
+        console.error('Job Filters Error:', error);
         res.status(500).json({ message: 'Server Error' });
     }
 };

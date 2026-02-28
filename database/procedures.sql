@@ -156,9 +156,7 @@ BEGIN
 END;
 $$;
 
----------------------------------------------------------
 -- PROFILE MANAGEMENT
----------------------------------------------------------
 
 -- 1. Atomic Profile Update
 CREATE OR REPLACE PROCEDURE sp_update_candidate_profile(
@@ -791,21 +789,130 @@ END;
 $$;
 
 -- fn_top_skills
+DROP FUNCTION IF EXISTS fn_top_skills();
 CREATE OR REPLACE FUNCTION fn_top_skills()
 RETURNS TABLE (
     skill_name VARCHAR,
-    demand_count BIGINT
+    demand_count BIGINT,
+    supply_count BIGINT
 )
 LANGUAGE plpgsql
 AS $$
 BEGIN
     RETURN QUERY
-    SELECT s.skill_name, COUNT(jr.job_id) as demand_count
-    FROM skill s
-    JOIN job_requirement jr ON s.skill_id = jr.skill_id
-    GROUP BY s.skill_name
-    ORDER BY demand_count DESC
-    LIMIT 10;
+    WITH skill_stats AS (
+        SELECT 
+            s.skill_id,
+            s.skill_name,
+            (SELECT COUNT(jr.job_id) FROM job_requirement jr WHERE jr.skill_id = s.skill_id) AS demand_count,
+            (SELECT COUNT(cs.candidate_id) FROM candidate_skill cs WHERE cs.skill_id = s.skill_id) AS supply_count
+        FROM skill s
+    )
+    SELECT 
+        ss.skill_name, 
+        ss.demand_count, 
+        ss.supply_count
+    FROM skill_stats ss
+    WHERE ss.demand_count > 0 OR ss.supply_count > 0
+    ORDER BY ss.demand_count DESC, ss.supply_count DESC
+    LIMIT 20;
+END;
+$$;
+
+DROP FUNCTION IF EXISTS fn_recommend_jobs(BIGINT);
+CREATE OR REPLACE FUNCTION fn_recommend_jobs(p_candidate_id BIGINT)
+RETURNS TABLE (
+    job_id BIGINT,
+    employer_id BIGINT,
+    title VARCHAR,
+    company_name VARCHAR,
+    location VARCHAR,
+    salary_range VARCHAR,
+    expires_at DATE,
+    match_score INT,
+    matched_skills TEXT[],
+    missing_skills TEXT[]
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_desired_title VARCHAR;
+    v_city VARCHAR;
+BEGIN
+    SELECT desired_job_title, city INTO v_desired_title, v_city
+    FROM candidate_profile
+    WHERE candidate_id = p_candidate_id;
+
+    RETURN QUERY
+    WITH candidate_skills AS (
+        SELECT cs.skill_id, s.skill_name 
+        FROM candidate_skill cs
+        JOIN skill s ON s.skill_id = cs.skill_id
+        WHERE cs.candidate_id = p_candidate_id
+    ),
+    job_skills_mapping AS (
+        SELECT 
+            jr.job_id,
+            ARRAY_AGG(s.skill_name::TEXT) FILTER (WHERE cs.skill_id IS NOT NULL) AS matched_skills,
+            ARRAY_AGG(s.skill_name::TEXT) FILTER (WHERE cs.skill_id IS NULL) AS missing_skills,
+            COUNT(jr.skill_id) AS total_skills,
+            COUNT(cs.skill_id) AS matched_skills_count
+        FROM job_requirement jr
+        JOIN skill s ON s.skill_id = jr.skill_id
+        LEFT JOIN candidate_skills cs ON cs.skill_id = jr.skill_id
+        GROUP BY jr.job_id
+    ),
+    job_scoring AS (
+        SELECT 
+            j.job_id,
+            j.employer_id,
+            j.title,
+            e.company_name,
+            j.location as job_location,
+            e.location as emp_location,
+            j.salary_range,
+            j.expires_at,
+            COALESCE(jsm.matched_skills, ARRAY[]::TEXT[]) AS matched_skills,
+            COALESCE(jsm.missing_skills, ARRAY[]::TEXT[]) AS missing_skills,
+            
+            -- Skills Score (Max 50)
+            CASE 
+                WHEN COALESCE(jsm.total_skills, 0) = 0 THEN 50 -- If job has no skills required, full skill points? Or maybe 0. Let's give 25.
+                ELSE (COALESCE(jsm.matched_skills_count, 0)::FLOAT / jsm.total_skills::FLOAT * 50)::INT
+            END AS skills_score,
+            
+            -- Title Score (Max 30)
+            CASE
+                WHEN v_desired_title IS NOT NULL AND j.title ILIKE '%' || v_desired_title || '%' THEN 30
+                WHEN v_desired_title IS NOT NULL AND v_desired_title ILIKE '%' || j.title || '%' THEN 30
+                ELSE 0
+            END AS title_score,
+
+            -- Location Score (Max 20)
+            CASE
+                WHEN v_city IS NOT NULL AND (j.location ILIKE '%' || v_city || '%' OR e.location ILIKE '%' || v_city || '%') THEN 20
+                ELSE 0
+            END AS location_score
+
+        FROM job j
+        JOIN employer e ON e.employer_id = j.employer_id
+        LEFT JOIN job_skills_mapping jsm ON jsm.job_id = j.job_id
+        WHERE j.status = 'Open' AND j.expires_at >= CURRENT_DATE
+    )
+    SELECT 
+        js.job_id, 
+        js.employer_id,
+        js.title, 
+        js.company_name, 
+        COALESCE(js.job_location, js.emp_location) AS location, 
+        js.salary_range, 
+        js.expires_at,
+        (js.skills_score + js.title_score + js.location_score) AS match_score,
+        js.matched_skills,
+        js.missing_skills
+    FROM job_scoring js
+    WHERE (js.skills_score + js.title_score + js.location_score) > 0
+    ORDER BY match_score DESC, js.expires_at ASC;
 END;
 $$;
 

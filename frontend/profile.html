@@ -115,7 +115,7 @@
 <body>
     <!-- Navbar -->
     <nav
-        style="padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; background: rgba(30,30,46,0.9); backdrop-filter: blur(10px);">
+        style="padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; background: rgba(255, 255, 255, 0.45); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);">
         <div>
             <h2
                 style="margin: 0; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.8rem;">
@@ -154,19 +154,6 @@
         async function loadProfile(type, id) {
             try {
                 let url = '';
-                // Logic: 
-                // If viewing a CANDIDATE, we generally are an EMPLOYER (so use employer token/api wrapper? No, use the token we have)
-                // The endpoints are protected.
-                // Candidate Public API: /api/candidate/public/:id
-                // Employer Public API: /api/employer/public/:id
-
-                // However, we need to decide WHICH axios base to use based on WHO we are logged in as? 
-                // Actually, the endpoints allow any authenticated user usually. 
-                // Let's assume the token works for the respective route group if we are allowed.
-
-                // Wait, if I am a Candidate viewing an Employer, I should call a route accessible to me.
-                // Currently I put `getPublicEmployerProfile` in `employerRoutes` protected by `auth` which usually expects any valid token?
-                // Let's assume standard auth middleware accepts any valid user (Candidate or Employer).
 
                 if (type === 'candidate') {
                     url = `${API_CANDIDATE}/public/${id}`;
@@ -242,23 +229,53 @@
                     `).join('');
                 }
 
+                // Projects
+                let projHtml = '<p style="color:var(--text-muted)">No projects listed.</p>';
+                if (sections.projects && sections.projects.length > 0) {
+                    projHtml = sections.projects.map(pr => `
+                        <div class="timeline-item">
+                        <h4 style="margin:0">${pr.title}</h4>
+                            ${pr.project_url ? `<a href="${pr.project_url}" target="_blank" style="color:var(--primary-color); font-size:0.9rem;">${pr.project_url}</a>` : ''}
+                    <span style="display:block; font-size:0.85rem; color:var(--text-muted); margin: 0.25rem 0;">
+                    ${pr.start_date ? new Date(pr.start_date).getFullYear() : ''} -
+                    ${pr.end_date ? new Date(pr.end_date).getFullYear() : 'Present'}
+                            </span>
+                        <p style="font-size:0.9rem; color:#e2e8f0;">${pr.description || ''}</p>
+                        </div>
+                        `).join('');
+                }
+
                 container.innerHTML = `
-                    <div class="profile-header">
-                        <div class="profile-avatar">${p.first_name.charAt(0)}</div>
+                        <div class="profile-header">
+                        <div class="profile-avatar">${p.first_name ? p.first_name.charAt(0) : 'C'}</div>
                         <h1 style="margin:0">${p.full_name}</h1>
                         <p style="color: var(--primary-color); font-size: 1.1rem;">${p.headline || 'Candidate'}</p>
-                        <p style="color: var(--text-muted); margin-top: 0.5rem;">${p.city || ''}, ${p.country || ''}</p>
-                        
-                        <div style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: center;">
-                            ${p.email ? `<a href="mailto:${p.email}" class="btn" style="width:auto; padding:0.5rem 1rem; font-size:0.9rem;">Email</a>` : ''}
+                        <p style="color: var(--text-muted); margin-top: 0.5rem;">${p.city || ''}${p.city && p.country ? ', ' : ''}${p.country || ''}</p>
+                        <p style="margin-top: 0.5rem; color: #a855f7;"><strong style="color: var(--text-muted);">Experience:</strong> ${p.experience_years ? p.experience_years + ' Years' : 'Not specified'}</p>
+
+                        <div style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: center; align-items: center; flex-wrap: wrap;">
+                            ${p.email ? `<span style="font-size:0.95rem; color:var(--text-muted);">✉️ ${p.email}</span>` : ''}
+                            ${p.contact_number ? `<a href="tel:${p.contact_number}" class="btn" style="width:auto; padding:0.5rem 1rem; font-size:0.9rem; background: var(--glass-bg); border: 1px solid var(--text-muted);">Call</a>` : ''}
                             ${p.linkedin_url ? `<a href="${p.linkedin_url}" target="_blank" class="btn" style="width:auto; padding:0.5rem 1rem; font-size:0.9rem; background: #0077b5;">LinkedIn</a>` : ''}
                             ${p.github_url ? `<a href="${p.github_url}" target="_blank" class="btn" style="width:auto; padding:0.5rem 1rem; font-size:0.9rem; background: #333;">GitHub</a>` : ''}
                         </div>
                     </div>
 
-                    <div class="section-card">
-                        <h3 class="section-title">About</h3>
-                        <p style="line-height: 1.6;">${p.summary || 'No summary provided.'}</p>
+                    <div class="info-grid">
+                        <div class="section-card">
+                            <h3 class="section-title">About</h3>
+                            <p style="line-height: 1.6;">${p.summary || 'No summary provided.'}</p>
+                        </div>
+
+                        <div class="section-card">
+                            <h3 class="section-title">Job Preferences</h3>
+                            <p style="margin-bottom: 0.5rem;"><strong style="color: var(--text-muted);">Role:</strong> ${p.desired_job_title || 'Any'}</p>
+                            <p style="margin-bottom: 0.5rem;"><strong style="color: var(--text-muted);">Type:</strong> ${p.employment_type || 'Any'}</p>
+                            <p style="margin-bottom: 0.5rem;"><strong style="color: var(--text-muted);">Work Mode:</strong> ${p.work_mode_preference || 'Any'}</p>
+                            <p style="margin-bottom: 0.5rem;"><strong style="color: var(--text-muted);">Salary Expected:</strong> ${p.expected_salary_min ? p.currency + ' ' + p.expected_salary_min + ' - ' + (p.expected_salary_max || 'Any') : 'Not specified'}</p>
+                            <p style="margin-bottom: 0.5rem;"><strong style="color: var(--text-muted);">Notice Period:</strong> ${p.notice_period_days !== null ? p.notice_period_days + ' Days' : 'Not specified'}</p>
+                            <p style="margin-bottom: 0.5rem;"><strong style="color: var(--text-muted);">Relocate:</strong> ${p.willing_to_relocate === true ? 'Yes' : (p.willing_to_relocate === false ? 'No' : 'Not specified')}</p>
+                        </div>
                     </div>
 
                     <div class="section-card">
@@ -266,14 +283,21 @@
                         <div>${skillsHtml}</div>
                     </div>
 
-                    <div class="section-card">
-                        <h3 class="section-title">Experience</h3>
-                        <div>${expHtml}</div>
-                    </div>
+                    <div class="info-grid">
+                        <div class="section-card" style="margin-bottom: 0;">
+                            <h3 class="section-title">Experience</h3>
+                            <div>${expHtml}</div>
+                        </div>
 
-                    <div class="section-card">
-                        <h3 class="section-title">Education</h3>
-                        <div>${eduHtml}</div>
+                        <div class="section-card" style="margin-bottom: 0;">
+                            <h3 class="section-title">Education</h3>
+                            <div>${eduHtml}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-card" style="margin-top: 1.5rem;">
+                        <h3 class="section-title">Projects</h3>
+                        <div>${projHtml}</div>
                     </div>
                 `;
 
@@ -294,13 +318,13 @@
                                     <small style="color:var(--text-muted);">${c.duration_days} Days • ${c.mode}</small>
                                 </div>
                             </div>
-                            <div style="margin-top:0.5rem; font-size:0.85rem; color:var(--text-muted);">Students: <strong style="color:white;">${c.enrolled_count}</strong></div>
+                            <div style="margin-top:0.5rem; font-size:0.85rem; color:var(--text-muted);">Students: <strong style="color: var(--text-main);">${c.enrolled_count}</strong></div>
                         </div>
-                    `).join('');
+                        `).join('');
                 }
 
                 container.innerHTML = `
-                    <div class="profile-header">
+                        <div class="profile-header">
                         <div class="profile-avatar">${(t.organization_name || t.username || 'T').charAt(0)}</div>
                         <h1 style="margin:0">${t.organization_name || t.username}</h1>
                         <p style="color: var(--primary-color); font-size: 1.1rem;">${t.specialization || 'Trainer'}</p>
@@ -340,36 +364,97 @@
                 const e = data;
 
                 container.innerHTML = `
-                    <div class="profile-header">
+                        <div class="profile-header">
                         <div class="profile-avatar" style="border-radius: 12px;">${e.company_name.charAt(0)}</div>
                         <h1 style="margin:0">${e.company_name}</h1>
                         <p style="color: var(--primary-color); font-size: 1.1rem;">${e.industry || 'Company'}</p>
                         <p style="color: var(--text-muted); margin-top: 0.5rem;">${e.location || ''}</p>
                         
-                        <div style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: center;">
+                        <div style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: center; align-items: center; flex-wrap: wrap;">
                             ${e.website ? `<a href="${e.website.startsWith('http') ? e.website : 'https://' + e.website}" target="_blank" class="btn" style="width:auto; padding:0.5rem 1rem; font-size:0.9rem;">Visit Website</a>` : ''}
-                            ${e.contact_number ? `<a href="tel:${e.contact_number}" class="btn" style="width:auto; padding:0.5rem 1rem; font-size:0.9rem; background: var(--glass-bg); border: 1px solid var(--text-muted);">Call</a>` : ''}
+                            ${e.contact_number ? `<span style="font-size:0.95rem; color:var(--text-muted);">📞 ${e.contact_number}</span>` : ''}
                         </div>
                     </div>
 
-                    <div class="info-grid">
-                        <div class="section-card">
-                            <h3 class="section-title">Overview</h3>
-                            <div class="info-item">
-                                <label>Industry</label>
-                                <span>${e.industry}</span>
-                            </div>
-                            <div style="margin-top: 1rem;" class="info-item">
-                                <label>Location</label>
-                                <span>${e.location}</span>
-                            </div>
-                            <div style="margin-top: 1rem;" class="info-item">
-                                <label>Open Jobs</label>
-                                <span style="color: var(--primary-color); font-weight: bold;">${e.open_jobs} Active Postings</span>
+                        <div class="info-grid">
+                            <div class="section-card">
+                                <h3 class="section-title">Overview</h3>
+                                <div class="info-item">
+                                    <label>Industry</label>
+                                    <span>${e.industry || 'Not specified'}</span>
+                                </div>
+                                <div style="margin-top: 1rem;" class="info-item">
+                                    <label>Location</label>
+                                    <span>${e.location || 'Not specified'}</span>
+                                </div>
+                                <div style="margin-top: 1rem;" class="info-item">
+                                    <label>Open Jobs</label>
+                                    <span style="color: var(--primary-color); font-weight: bold;">${e.open_jobs} Active Postings</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
                 `;
+
+                // Auto-fetch jobs if there are any
+                if (e.open_jobs > 0) {
+                    container.innerHTML += `
+                        <div class="section-card" id="employer-jobs-section">
+                        <h3 class="section-title">Job Openings</h3>
+                        <div id="employer-jobs-list">
+                            <p style="color: var(--text-muted); text-align: center;">Loading jobs...</p>
+                        </div>
+                    </div>
+                        `;
+
+                    setTimeout(async () => {
+                        try {
+                            // We can use the public job search endpoint, filtered by this company name
+                            const res = await fetch(`${API_CANDIDATE}/jobs?company=${encodeURIComponent(e.company_name)}`, {
+                                headers: { 'x-auth-token': localStorage.getItem('token') }
+                            });
+                            if (res.ok) {
+                                const jobs = await res.json();
+                                const listContainer = document.getElementById('employer-jobs-list');
+
+                                if (jobs.length === 0) {
+                                    listContainer.innerHTML = '<p style="color: var(--text-muted);">No active jobs found.</p>';
+                                    return;
+                                }
+
+                                listContainer.innerHTML = jobs.map(j => {
+                                    let skillsHtml = '';
+                                    if (j.required_skills && j.required_skills.length > 0) {
+                                        const topSkills = j.required_skills.slice(0, 5).map(s => `<span class="tag" style="background: rgba(168, 85, 247, 0.1); color: var(--primary-color); border: 1px solid rgba(168, 85, 247, 0.3); font-size: 0.75rem;">${s}</span>`).join('');
+                                        const moreCount = j.required_skills.length > 5 ? `<span class="tag" style="background: transparent; color: var(--text-muted); font-size: 0.75rem;">+${j.required_skills.length - 5} more</span>` : '';
+                                        skillsHtml = `<div style="margin-top: 1rem;">${topSkills}${moreCount}</div>`;
+                                    }
+
+                                    return `
+                                        <div style="padding: 1.5rem; background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 12px; margin-bottom: 1rem;">
+                                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                                                <div>
+                                                    <h4 style="margin: 0; color: var(--primary-color); font-size: 1.1rem;">${j.title}</h4>
+                                                    <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
+                                                        ${j.location || 'Remote'} • ${j.employment_type || 'Full-time'}
+                                                    </div>
+                                                </div>
+                                                <a href="jobs.html?open=${j.job_id}" class="btn" style="width: auto; padding: 0.4rem 1rem; font-size: 0.85rem;">View Job</a>
+                                            </div>
+                                            <div style="margin-top: 1rem; font-size: 0.9rem;">
+                                                <strong style="color: var(--text-muted);">Salary:</strong> ${j.salary_range ? j.salary_range : 'Negotiable'}
+                                            </div>
+                                            ${skillsHtml}
+                                        </div>
+                                    `;
+                                }).join('');
+                            }
+                        } catch (err) {
+                            console.error('Failed to load employer jobs:', err);
+                            const listContainer = document.getElementById('employer-jobs-list');
+                            if (listContainer) listContainer.innerHTML = '<p style="color: red;">Error loading jobs.</p>';
+                        }
+                    }, 500);
+                }
             }
         }
     </script>

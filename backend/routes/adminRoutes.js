@@ -36,5 +36,8 @@ router.delete('/users/:id', adminController.deleteUser);
 // Low-Rated Course Management
 router.get('/low-rated-courses', adminController.getLowRatedCourses);
 router.delete('/courses/:id', adminController.deleteCourse);
+// Job Management
+router.get('/jobs', adminController.getAllJobs);
+router.delete('/jobs/:id', adminController.deleteJob);
 
 module.exports = router;

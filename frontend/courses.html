@@ -127,7 +127,7 @@
 <body>
     <!-- Navbar -->
     <nav
-        style="padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; background: rgba(30,30,46,0.9); backdrop-filter: blur(10px);">
+        style="padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; background: rgba(255, 255, 255, 0.45); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);">
         <div style="display: flex; align-items: center; gap: 2rem;">
             <h2
                 style="margin: 0; background: var(--primary-gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.8rem;">
@@ -137,11 +137,17 @@
                     style="color: var(--text-muted); text-decoration: none; margin-right: 1.5rem;">Dashboard</a>
                 <a href="jobs.html" style="color: var(--text-muted); text-decoration: none; margin-right: 1.5rem;">Find
                     Jobs</a>
-                <a href="courses.html" style="color: white; font-weight: bold; text-decoration: none;">Explore
+                <a href="courses.html" style="color: var(--text-main); font-weight: bold; text-decoration: none;">Explore
                     Courses</a>
             </div>
         </div>
         <div style="display: flex; align-items: center; gap: 1rem;">
+            <button onclick="window.location.href='jobs.html'" class="btn"
+                style="background: var(--primary-color); width: auto; padding: 0.5rem 1rem; display: none;"
+                id="nav-jobs-btn">Jobs</button>
+            <button onclick="window.location.href='recommended-jobs.html'" class="btn"
+                style="background: #10b981; width: auto; padding: 0.5rem 1rem; display: none;"
+                id="nav-recommended-btn">Recommended</button>
             <button onclick="logout()" class="btn"
                 style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); width: auto; padding: 0.5rem 1rem;">Logout</button>
         </div>
@@ -389,7 +395,7 @@
                             
                             <p style="color: #cbd5e0; line-height: 1.6; margin-bottom: 1rem; font-size: 0.95rem;">${course.description || 'No description provided.'}</p>
                             
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1.25rem;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 1.5rem; border-top: 1px solid rgba(0, 0, 0, 0.02); padding-top: 1.25rem;">
                                 <div class="skills-list" style="margin: 0;">
                                     ${skillsHtml}
                                 </div>
@@ -584,7 +590,7 @@
                 }
 
                 container.innerHTML = reviews.map(r => `
-                    <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; border: 1px solid var(--glass-border);">
+                    <div style="background: rgba(0, 0, 0, 0.02); padding: 1rem; border-radius: 8px; border: 1px solid var(--glass-border);">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                             <span style="font-weight: 600; color: var(--primary-color);">${r.username}</span>
                             <span style="color: #fbbf24;">${'★'.repeat(r.rating)}</span>
