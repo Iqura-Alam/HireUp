@@ -53,6 +53,9 @@ HireUp supports four types of users:
 - Admin functionality for approval and management
 
 ## Database Design Overview
+<img width="4726" height="4576" alt="image" src="https://github.com/user-attachments/assets/1769a9d8-0d0a-4c7b-b9b0-79d60f25a7ea" />
+
+
 
 The HireUp platform is built on **PostgreSQL** and organizes data in a way that makes it easy to manage candidates, employers, jobs, and courses.
 
